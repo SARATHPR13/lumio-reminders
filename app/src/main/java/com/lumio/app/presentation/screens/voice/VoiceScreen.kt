@@ -7,8 +7,8 @@ import androidx.compose.foundation.lazy.*
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.rounded.ArrowBack
 import androidx.compose.material.icons.rounded.*
-import androidx.compose.material.icons.automirrored.rounded.*
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -73,7 +73,6 @@ fun VoiceScreen(
                 .verticalScroll(rememberScrollState()),
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
-
             if (!uiState.isAvailable) {
                 NotAvailableState()
                 return@Column
@@ -81,7 +80,6 @@ fun VoiceScreen(
 
             Spacer(Modifier.height(24.dp))
 
-            // ── Mic Button ────────────────────────────
             MicSection(
                 speechState = uiState.speechState,
                 spokenText  = uiState.spokenText,
@@ -95,7 +93,6 @@ fun VoiceScreen(
 
             Spacer(Modifier.height(24.dp))
 
-            // ── Error message ──────────────────────────
             uiState.errorMessage?.let { error ->
                 Card(
                     modifier = Modifier
@@ -121,17 +118,15 @@ fun VoiceScreen(
                 Spacer(Modifier.height(16.dp))
             }
 
-            // ── Parsed Preview ─────────────────────────
             if (uiState.showPreview) {
                 ParsedPreview(
-                    uiState   = uiState,
-                    onTitle   = { viewModel.updateTitle(it) },
-                    onPriority= { viewModel.updatePriority(it) },
-                    onCategory= { viewModel.updateCategory(it) },
-                    onSave    = { viewModel.saveReminder() }
+                    uiState    = uiState,
+                    onTitle    = { viewModel.updateTitle(it) },
+                    onPriority = { viewModel.updatePriority(it) },
+                    onCategory = { viewModel.updateCategory(it) },
+                    onSave     = { viewModel.saveReminder() }
                 )
             } else {
-                // ── Suggestions ────────────────────────
                 SuggestionsSection(
                     suggestions = uiState.suggestions,
                     onTap       = { viewModel.useSuggestion(it) }
@@ -150,13 +145,11 @@ private fun MicSection(
     onMicClick: () -> Unit
 ) {
     val isListening = speechState is SpeechState.Listening
-
-    // Pulsing animation
     val infiniteAnim = rememberInfiniteTransition(label = "pulse")
     val pulseScale by infiniteAnim.animateFloat(
-        initialValue   = 1f,
-        targetValue    = 1.25f,
-        animationSpec  = infiniteRepeatable(
+        initialValue  = 1f,
+        targetValue   = 1.25f,
+        animationSpec = infiniteRepeatable(
             animation  = tween(800, easing = EaseInOut),
             repeatMode = RepeatMode.Reverse
         ),
@@ -168,10 +161,7 @@ private fun MicSection(
         verticalArrangement = Arrangement.spacedBy(20.dp),
         modifier = Modifier.padding(horizontal = 24.dp)
     ) {
-
-        // Mic button
         Box(contentAlignment = Alignment.Center) {
-            // Outer pulse ring
             if (isListening) {
                 Box(
                     modifier = Modifier
@@ -181,17 +171,15 @@ private fun MicSection(
                         .background(MaterialTheme.colorScheme.primary.copy(alpha = 0.15f))
                 )
             }
-
-            // Inner button
             Surface(
-                onClick    = onMicClick,
-                shape      = CircleShape,
-                color      = when (speechState) {
+                onClick         = onMicClick,
+                shape           = CircleShape,
+                color           = when (speechState) {
                     is SpeechState.Listening  -> MaterialTheme.colorScheme.error
                     is SpeechState.Processing -> MaterialTheme.colorScheme.secondary
                     else                      -> MaterialTheme.colorScheme.primary
                 },
-                modifier   = Modifier.size(100.dp),
+                modifier        = Modifier.size(100.dp),
                 shadowElevation = if (isListening) 12.dp else 4.dp
             ) {
                 Box(Modifier.fillMaxSize(), Alignment.Center) {
@@ -203,27 +191,20 @@ private fun MicSection(
                             )
                         }
                         is SpeechState.Listening -> {
-                            Icon(
-                                Icons.Rounded.MicOff,
-                                "Stop",
+                            Icon(Icons.Rounded.MicOff, "Stop",
                                 tint     = Color.White,
-                                modifier = Modifier.size(44.dp)
-                            )
+                                modifier = Modifier.size(44.dp))
                         }
                         else -> {
-                            Icon(
-                                Icons.Rounded.Mic,
-                                "Start",
+                            Icon(Icons.Rounded.Mic, "Start",
                                 tint     = Color.White,
-                                modifier = Modifier.size(44.dp)
-                            )
+                                modifier = Modifier.size(44.dp))
                         }
                     }
                 }
             }
         }
 
-        // Status text
         Text(
             text = when (speechState) {
                 is SpeechState.Idle       -> "Tap to speak"
@@ -243,7 +224,6 @@ private fun MicSection(
             }
         )
 
-        // Example hint
         if (speechState is SpeechState.Idle) {
             Card(
                 shape  = RoundedCornerShape(12.dp),
@@ -261,7 +241,6 @@ private fun MicSection(
             }
         }
 
-        // Spoken text display
         if (spokenText.isNotBlank()) {
             Card(
                 modifier = Modifier.fillMaxWidth(),
@@ -275,14 +254,14 @@ private fun MicSection(
                     verticalAlignment = Alignment.CenterVertically,
                     horizontalArrangement = Arrangement.spacedBy(10.dp)
                 ) {
-                    Icon(Icons.Rounded.FormatQuote, null,
-                        tint = MaterialTheme.colorScheme.onPrimaryContainer,
+                    Icon(Icons.Rounded.RecordVoiceOver, null,
+                        tint     = MaterialTheme.colorScheme.onPrimaryContainer,
                         modifier = Modifier.size(18.dp))
                     Text(
-                        text  = "\"$spokenText\"",
-                        style = MaterialTheme.typography.bodyMedium,
+                        text       = "\"$spokenText\"",
+                        style      = MaterialTheme.typography.bodyMedium,
                         fontWeight = FontWeight.Medium,
-                        color = MaterialTheme.colorScheme.onPrimaryContainer
+                        color      = MaterialTheme.colorScheme.onPrimaryContainer
                     )
                 }
             }
@@ -304,26 +283,16 @@ private fun ParsedPreview(
             .padding(16.dp),
         verticalArrangement = Arrangement.spacedBy(16.dp)
     ) {
-
-        // Header
         Row(verticalAlignment = Alignment.CenterVertically) {
-            Icon(
-                Icons.Rounded.AutoAwesome,
-                null,
+            Icon(Icons.Rounded.AutoAwesome, null,
                 tint     = MaterialTheme.colorScheme.primary,
-                modifier = Modifier.size(20.dp)
-            )
+                modifier = Modifier.size(20.dp))
             Spacer(Modifier.width(8.dp))
-            Text(
-                "AI Parsed Result",
+            Text("AI Parsed Result",
                 style      = MaterialTheme.typography.titleMedium,
                 fontWeight = FontWeight.Bold,
-                color      = MaterialTheme.colorScheme.primary
-            )
-
+                color      = MaterialTheme.colorScheme.primary)
             Spacer(Modifier.weight(1f))
-
-            // Confidence badge
             val confColor = when {
                 uiState.confidence > 0.8f -> Color(0xFF4CAF50)
                 uiState.confidence > 0.5f -> Color(0xFFF9A825)
@@ -335,15 +304,14 @@ private fun ParsedPreview(
             ) {
                 Text(
                     "${(uiState.confidence * 100).toInt()}% confident",
-                    modifier  = Modifier.padding(horizontal = 10.dp, vertical = 4.dp),
-                    fontSize  = 11.sp,
-                    fontWeight= FontWeight.SemiBold,
-                    color     = confColor
+                    modifier   = Modifier.padding(horizontal = 10.dp, vertical = 4.dp),
+                    fontSize   = 11.sp,
+                    fontWeight = FontWeight.SemiBold,
+                    color      = confColor
                 )
             }
         }
 
-        // Title field
         OutlinedTextField(
             value         = uiState.parsedTitle,
             onValueChange = onTitle,
@@ -354,7 +322,6 @@ private fun ParsedPreview(
             singleLine    = true
         )
 
-        // Date & Time display
         Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
             Card(
                 modifier = Modifier.weight(1f),
@@ -364,13 +331,10 @@ private fun ParsedPreview(
                 )
             ) {
                 Column(modifier = Modifier.padding(12.dp)) {
-                    Text("📅 Date", style = MaterialTheme.typography.labelSmall,
+                    Text("Date", style = MaterialTheme.typography.labelSmall,
                         color = MaterialTheme.colorScheme.onPrimaryContainer)
-                    Text(
-                        uiState.parsedDate,
-                        fontWeight = FontWeight.Bold,
-                        color      = MaterialTheme.colorScheme.onPrimaryContainer
-                    )
+                    Text(uiState.parsedDate, fontWeight = FontWeight.Bold,
+                        color = MaterialTheme.colorScheme.onPrimaryContainer)
                 }
             }
             Card(
@@ -381,18 +345,14 @@ private fun ParsedPreview(
                 )
             ) {
                 Column(modifier = Modifier.padding(12.dp)) {
-                    Text("⏰ Time", style = MaterialTheme.typography.labelSmall,
+                    Text("Time", style = MaterialTheme.typography.labelSmall,
                         color = MaterialTheme.colorScheme.onPrimaryContainer)
-                    Text(
-                        uiState.parsedTime,
-                        fontWeight = FontWeight.Bold,
-                        color      = MaterialTheme.colorScheme.onPrimaryContainer
-                    )
+                    Text(uiState.parsedTime, fontWeight = FontWeight.Bold,
+                        color = MaterialTheme.colorScheme.onPrimaryContainer)
                 }
             }
         }
 
-        // Priority
         Text("Priority", style = MaterialTheme.typography.labelLarge,
             fontWeight = FontWeight.SemiBold,
             color = MaterialTheme.colorScheme.onSurfaceVariant)
@@ -412,7 +372,6 @@ private fun ParsedPreview(
             }
         }
 
-        // Category
         Text("Category", style = MaterialTheme.typography.labelLarge,
             fontWeight = FontWeight.SemiBold,
             color = MaterialTheme.colorScheme.onSurfaceVariant)
@@ -439,7 +398,6 @@ private fun ParsedPreview(
             }
         }
 
-        // Save button
         Button(
             onClick  = onSave,
             modifier = Modifier.fillMaxWidth().height(52.dp),
@@ -473,15 +431,13 @@ private fun SuggestionsSection(
     ) {
         Row(verticalAlignment = Alignment.CenterVertically) {
             Icon(Icons.Rounded.Lightbulb, null,
-                tint = Color(0xFFF9A825),
+                tint     = Color(0xFFF9A825),
                 modifier = Modifier.size(18.dp))
             Spacer(Modifier.width(6.dp))
-            Text(
-                "Try saying…",
+            Text("Try saying…",
                 style      = MaterialTheme.typography.titleSmall,
                 fontWeight = FontWeight.SemiBold,
-                color      = MaterialTheme.colorScheme.onSurfaceVariant
-            )
+                color      = MaterialTheme.colorScheme.onSurfaceVariant)
         }
 
         suggestions.forEach { suggestion ->
@@ -530,13 +486,11 @@ private fun NotAvailableState() {
             verticalArrangement = Arrangement.spacedBy(16.dp)
         ) {
             Text("🎤", fontSize = 72.sp)
-            Text(
-                "Voice Not Available",
+            Text("Voice Not Available",
                 style      = MaterialTheme.typography.titleLarge,
-                fontWeight = FontWeight.Bold
-            )
+                fontWeight = FontWeight.Bold)
             Text(
-                "Speech recognition is not available on this device. Please use the keyboard to add reminders.",
+                "Speech recognition is not available on this device.",
                 style     = MaterialTheme.typography.bodyMedium,
                 color     = MaterialTheme.colorScheme.onSurfaceVariant,
                 textAlign = TextAlign.Center
