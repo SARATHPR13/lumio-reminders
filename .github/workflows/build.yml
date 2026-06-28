@@ -1,4 +1,4 @@
-name: Build Lumio APK
+name: Build LUMIO APK
 
 on:
   push:
@@ -20,24 +20,23 @@ jobs:
           distribution: 'temurin'
           cache: gradle
 
-      - name: Grant execute permission
-        run: chmod +x gradlew
-
-      - name: Cache Gradle packages
+      - name: Cache Gradle
         uses: actions/cache@v4
         with:
           path: |
             ~/.gradle/caches
             ~/.gradle/wrapper
-          key: ${{ runner.os }}-gradle-${{ hashFiles('**/*.gradle*', '**/gradle-wrapper.properties') }}
-          restore-keys: |
-            ${{ runner.os }}-gradle-
+          key: ${{ runner.os }}-gradle-${{ hashFiles('**/*.gradle*') }}
+          restore-keys: ${{ runner.os }}-gradle-
+
+      - name: Grant execute permission
+        run: chmod +x gradlew
 
       - name: Run Unit Tests
         run: ./gradlew testDebugUnitTest --continue
 
       - name: Build Debug APK
-        run: ./gradlew assembleDebug --stacktrace
+        run: ./gradlew assembleDebug
 
       - name: Upload Test Results
         if: always()
@@ -47,9 +46,9 @@ jobs:
           path: app/build/reports/tests/
           retention-days: 7
 
-      - name: Upload Debug APK
+      - name: Upload LUMIO APK
         uses: actions/upload-artifact@v4
         with:
-          name: Lumio-Debug-APK
+          name: LUMIO-Smart-Reminders-APK
           path: app/build/outputs/apk/debug/app-debug.apk
-          retention-days: 14
+          retention-days: 30

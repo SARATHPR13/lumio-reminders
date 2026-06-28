@@ -1,6 +1,7 @@
 package com.lumio.app.presentation.navigation
 
 sealed class Screen(val route: String) {
+    object Onboarding   : Screen("onboarding")
     object Home         : Screen("home")
     object Calendar     : Screen("calendar")
     object Categories   : Screen("categories")
