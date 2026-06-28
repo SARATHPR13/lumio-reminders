@@ -4,6 +4,7 @@
     <string name="app_tagline">Smart Reminders</string>
     <string name="widget_small_name">Lumio — Small</string>
     <string name="widget_large_name">Lumio — Large</string>
+    <string name="widget_transparent_name">Lumio — Transparent</string>
     <string name="nav_home">Home</string>
     <string name="nav_calendar">Calendar</string>
     <string name="nav_categories">Categories</string>

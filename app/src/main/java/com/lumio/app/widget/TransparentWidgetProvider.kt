@@ -16,7 +16,7 @@ import java.text.SimpleDateFormat
 import java.util.Date
 import java.util.Locale
 
-class SmallWidgetProvider : AppWidgetProvider() {
+class TransparentWidgetProvider : AppWidgetProvider() {
 
     private val scope = CoroutineScope(SupervisorJob() + Dispatchers.IO)
 
@@ -37,41 +37,26 @@ class SmallWidgetProvider : AppWidgetProvider() {
         manager: AppWidgetManager,
         widgetId: Int
     ) {
-        val views = RemoteViews(context.packageName, R.layout.widget_small)
-
-        // Set current time
-        val timeStr = SimpleDateFormat("hh:mm a", Locale.getDefault()).format(Date())
-        views.setTextViewText(R.id.tv_widget_time, timeStr)
-
-        // Load next reminder
-        val next = WidgetDataProvider.getNextReminder(context)
+        val views  = RemoteViews(context.packageName, R.layout.widget_transparent)
+        val next   = WidgetDataProvider.getNextReminder(context)
 
         if (next != null) {
-            val reminderTime = SimpleDateFormat("hh:mm a · MMM dd", Locale.getDefault())
+            val timeStr = SimpleDateFormat("hh:mm a · MMM dd", Locale.getDefault())
                 .format(Date(next.dateTimeMillis))
-            views.setTextViewText(R.id.tv_widget_title, next.title)
-            views.setTextViewText(R.id.tv_widget_reminder_time, "⏰ $reminderTime")
+            views.setTextViewText(R.id.tv_transparent_title, next.title)
+            views.setTextViewText(R.id.tv_transparent_time,  "⏰ $timeStr")
         } else {
-            views.setTextViewText(R.id.tv_widget_title, "No upcoming reminders")
-            views.setTextViewText(R.id.tv_widget_reminder_time, "Tap to add one")
+            views.setTextViewText(R.id.tv_transparent_title, "No upcoming reminders")
+            views.setTextViewText(R.id.tv_transparent_time,  "Tap to add one")
         }
 
-        // Open app on tap
-        val openIntent = Intent(context, MainActivity::class.java)
+        val openIntent  = Intent(context, MainActivity::class.java)
         val openPending = PendingIntent.getActivity(
-            context, widgetId, openIntent,
+            context, widgetId + 3000, openIntent,
             PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
         )
-        views.setOnClickPendingIntent(R.id.tv_widget_title, openPending)
+        views.setOnClickPendingIntent(R.id.tv_transparent_title, openPending)
 
         manager.updateAppWidget(widgetId, views)
-    }
-
-    override fun onEnabled(context: Context) {
-        super.onEnabled(context)
-    }
-
-    override fun onDisabled(context: Context) {
-        super.onDisabled(context)
     }
 }

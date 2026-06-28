@@ -2,16 +2,64 @@
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:orientation="horizontal"
+    android:orientation="vertical"
+    android:padding="12dp"
     android:gravity="center_vertical"
-    android:padding="12dp">
+    android:background="@drawable/widget_small_bg">
+
+    <!-- Header Row -->
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal"
+        android:gravity="center_vertical"
+        android:layout_marginBottom="6dp">
+
+        <TextView
+            android:id="@+id/tv_widget_app_name"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:text="LUMIO"
+            android:textColor="#FFFFFFFF"
+            android:textSize="10sp"
+            android:textStyle="bold"
+            android:letterSpacing="0.15"
+            android:alpha="0.7" />
+
+        <TextView
+            android:id="@+id/tv_widget_time"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Now"
+            android:textColor="#FFFFFFFF"
+            android:textSize="9sp"
+            android:alpha="0.6" />
+
+    </LinearLayout>
+
+    <!-- Reminder Title -->
     <TextView
         android:id="@+id/tv_widget_title"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:text="No upcoming reminders"
         android:textColor="#FFFFFFFF"
-        android:textSize="13sp"
-        android:maxLines="1"
-        android:ellipsize="end" />
+        android:textSize="14sp"
+        android:textStyle="bold"
+        android:maxLines="2"
+        android:ellipsize="end"
+        android:lineSpacingMultiplier="1.2" />
+
+    <!-- Reminder Time -->
+    <TextView
+        android:id="@+id/tv_widget_reminder_time"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text=""
+        android:textColor="#FFFFFFFF"
+        android:textSize="11sp"
+        android:alpha="0.8"
+        android:layout_marginTop="4dp" />
+
 </LinearLayout>

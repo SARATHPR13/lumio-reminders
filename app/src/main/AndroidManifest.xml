@@ -26,6 +26,7 @@
         android:dataExtractionRules="@xml/data_extraction_rules"
         android:fullBackupContent="@xml/backup_rules">
 
+        <!-- Main Activity -->
         <activity
             android:name=".MainActivity"
             android:exported="true"
@@ -37,19 +38,26 @@
             </intent-filter>
         </activity>
 
-        <receiver android:name=".receiver.BootReceiver" android:exported="true">
+        <!-- Boot Receiver -->
+        <receiver android:name=".receiver.BootReceiver"
+            android:exported="true">
             <intent-filter android:priority="999">
                 <action android:name="android.intent.action.BOOT_COMPLETED" />
+                <action android:name="android.intent.action.QUICKBOOT_POWERON" />
             </intent-filter>
         </receiver>
 
-        <receiver android:name=".receiver.AlarmReceiver" android:exported="true">
+        <!-- Alarm Receiver -->
+        <receiver android:name=".receiver.AlarmReceiver"
+            android:exported="true">
             <intent-filter>
                 <action android:name="com.lumio.app.REMINDER_ALARM" />
             </intent-filter>
         </receiver>
 
-        <receiver android:name=".receiver.NotificationActionReceiver" android:exported="false">
+        <!-- Notification Action Receiver -->
+        <receiver android:name=".receiver.NotificationActionReceiver"
+            android:exported="false">
             <intent-filter>
                 <action android:name="com.lumio.app.ACTION_SNOOZE_5" />
                 <action android:name="com.lumio.app.ACTION_SNOOZE_15" />
@@ -58,23 +66,47 @@
             </intent-filter>
         </receiver>
 
+        <!-- Small Widget -->
         <receiver android:name=".widget.SmallWidgetProvider"
-            android:exported="true" android:label="@string/widget_small_name">
+            android:exported="true"
+            android:label="@string/widget_small_name">
             <intent-filter>
                 <action android:name="android.appwidget.action.APPWIDGET_UPDATE" />
             </intent-filter>
-            <meta-data android:name="android.appwidget.provider"
+            <meta-data
+                android:name="android.appwidget.provider"
                 android:resource="@xml/small_widget_info" />
         </receiver>
 
+        <!-- Large Widget -->
         <receiver android:name=".widget.LargeWidgetProvider"
-            android:exported="true" android:label="@string/widget_large_name">
+            android:exported="true"
+            android:label="@string/widget_large_name">
             <intent-filter>
                 <action android:name="android.appwidget.action.APPWIDGET_UPDATE" />
             </intent-filter>
-            <meta-data android:name="android.appwidget.provider"
+            <meta-data
+                android:name="android.appwidget.provider"
                 android:resource="@xml/large_widget_info" />
         </receiver>
+
+        <!-- Transparent Widget -->
+        <receiver android:name=".widget.TransparentWidgetProvider"
+            android:exported="true"
+            android:label="@string/widget_transparent_name">
+            <intent-filter>
+                <action android:name="android.appwidget.action.APPWIDGET_UPDATE" />
+            </intent-filter>
+            <meta-data
+                android:name="android.appwidget.provider"
+                android:resource="@xml/transparent_widget_info" />
+        </receiver>
+
+        <!-- Large Widget List Service -->
+        <service
+            android:name=".widget.LargeWidgetService"
+            android:exported="false"
+            android:permission="android.permission.BIND_REMOTEVIEWS" />
 
     </application>
 </manifest>
