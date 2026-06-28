@@ -10,6 +10,7 @@ import androidx.compose.material3.Surface
 import androidx.compose.ui.Modifier
 import androidx.core.splashscreen.SplashScreen.Companion.installSplashScreen
 import com.lumio.app.presentation.navigation.LumioNavGraph
+import com.lumio.app.presentation.permission.LumioPermissions
 import com.lumio.app.presentation.theme.LumioTheme
 import dagger.hilt.android.AndroidEntryPoint
 
@@ -23,9 +24,11 @@ class MainActivity : ComponentActivity() {
             LumioTheme {
                 Surface(
                     modifier = Modifier.fillMaxSize(),
-                    color = MaterialTheme.colorScheme.background
+                    color    = MaterialTheme.colorScheme.background
                 ) {
-                    LumioNavGraph()
+                    LumioPermissions {
+                        LumioNavGraph()
+                    }
                 }
             }
         }
