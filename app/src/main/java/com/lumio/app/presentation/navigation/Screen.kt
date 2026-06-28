@@ -7,6 +7,7 @@ sealed class Screen(val route: String) {
     object Settings     : Screen("settings")
     object AddReminder  : Screen("add_reminder")
     object Search       : Screen("search")
+    object Voice        : Screen("voice")
 
     object EditReminder : Screen("edit_reminder/{reminderId}") {
         fun createRoute(id: Long) = "edit_reminder/$id"
