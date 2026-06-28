@@ -8,6 +8,7 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.rounded.*
+import androidx.compose.material.icons.automirrored.rounded.*
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -510,7 +511,7 @@ private fun SuggestionsSection(
                         modifier = Modifier.weight(1f)
                     )
                     Icon(
-                        Icons.Rounded.PlayArrow, null,
+                        Icons.AutoMirrored.Rounded.PlayArrow, null,
                         tint     = MaterialTheme.colorScheme.primary,
                         modifier = Modifier.size(16.dp)
                     )

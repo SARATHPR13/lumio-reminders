@@ -6,6 +6,7 @@ import androidx.compose.foundation.lazy.*
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.rounded.*
+import androidx.compose.material.icons.automirrored.rounded.*
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -139,7 +140,7 @@ fun HomeScreen(
                     StatCard("Today",  "${uiState.todayCount}",
                         Icons.Rounded.Today, Color(0xFF1A73E8), Modifier.weight(1f))
                     StatCard("Active", "${uiState.totalCount}",
-                        Icons.Rounded.List, Color(0xFF7B2FBE), Modifier.weight(1f))
+                        Icons.AutoMirrored.Rounded.List, Color(0xFF7B2FBE), Modifier.weight(1f))
                     StatCard("Done",   "${uiState.completedCount}",
                         Icons.Rounded.CheckCircle, Color(0xFF2E7D32), Modifier.weight(1f))
                 }
