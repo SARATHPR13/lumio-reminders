@@ -2,7 +2,8 @@ package com.lumio.app.presentation.screens.add
 
 import androidx.compose.foundation.*
 import androidx.compose.foundation.layout.*
-import androidx.compose.foundation.lazy.*
+import androidx.compose.foundation.lazy.LazyRow
+import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.rounded.*
@@ -20,27 +21,30 @@ import androidx.navigation.NavController
 import com.lumio.app.domain.model.Category
 import com.lumio.app.domain.model.Priority
 import com.lumio.app.domain.model.RepeatType
-import com.lumio.app.presentation.screens.home.HomeViewModel
 import java.text.SimpleDateFormat
 import java.util.*
 
 @Composable
 fun AddReminderScreen(
     navController: NavController,
-    homeViewModel: HomeViewModel,
     viewModel: AddReminderViewModel = hiltViewModel()
 ) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
-    val datePickerState = rememberDatePickerState(initialSelectedDateMillis = uiState.dateTimeMillis)
-    val timePickerState = rememberTimePickerState(
-        initialHour   = Calendar.getInstance().apply { timeInMillis = uiState.dateTimeMillis }.get(Calendar.HOUR_OF_DAY),
-        initialMinute = Calendar.getInstance().apply { timeInMillis = uiState.dateTimeMillis }.get(Calendar.MINUTE)
-    )
 
-    fun save() {
-        val reminder = viewModel.buildReminder()
-        if (reminder != null) { homeViewModel.addReminder(reminder); navController.popBackStack() }
+    // Navigate back when saved
+    LaunchedEffect(uiState.isSaved) {
+        if (uiState.isSaved) navController.popBackStack()
     }
+
+    val datePickerState = rememberDatePickerState(
+        initialSelectedDateMillis = uiState.dateTimeMillis
+    )
+    val timePickerState = rememberTimePickerState(
+        initialHour   = Calendar.getInstance()
+            .apply { timeInMillis = uiState.dateTimeMillis }.get(Calendar.HOUR_OF_DAY),
+        initialMinute = Calendar.getInstance()
+            .apply { timeInMillis = uiState.dateTimeMillis }.get(Calendar.MINUTE)
+    )
 
     Scaffold(
         topBar = {
@@ -52,11 +56,17 @@ fun AddReminderScreen(
                     }
                 },
                 actions = {
-                    TextButton(onClick = { save() }) {
-                        Text("Save", fontWeight = FontWeight.Bold, fontSize = 16.sp)
+                    if (uiState.isSaving) {
+                        CircularProgressIndicator(modifier = Modifier.size(24.dp).padding(end = 16.dp))
+                    } else {
+                        TextButton(onClick = { viewModel.saveReminder() }) {
+                            Text("Save", fontWeight = FontWeight.Bold, fontSize = 16.sp)
+                        }
                     }
                 },
-                colors = TopAppBarDefaults.topAppBarColors(containerColor = MaterialTheme.colorScheme.background)
+                colors = TopAppBarDefaults.topAppBarColors(
+                    containerColor = MaterialTheme.colorScheme.background
+                )
             )
         },
         containerColor = MaterialTheme.colorScheme.background
@@ -96,7 +106,7 @@ fun AddReminderScreen(
                 maxLines = 4
             )
 
-            // Date & Time
+            // Date & Time Row
             Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
                 OutlinedCard(
                     onClick = { viewModel.showDate(true) },
@@ -108,17 +118,27 @@ fun AddReminderScreen(
                         verticalAlignment = Alignment.CenterVertically,
                         horizontalArrangement = Arrangement.spacedBy(8.dp)
                     ) {
-                        Icon(Icons.Rounded.CalendarMonth, null, tint = MaterialTheme.colorScheme.primary, modifier = Modifier.size(20.dp))
+                        Icon(
+                            Icons.Rounded.CalendarMonth, null,
+                            tint = MaterialTheme.colorScheme.primary,
+                            modifier = Modifier.size(20.dp)
+                        )
                         Column {
-                            Text("Date", style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
                             Text(
-                                text = SimpleDateFormat("MMM dd, yyyy", Locale.getDefault()).format(Date(uiState.dateTimeMillis)),
+                                "Date",
+                                style = MaterialTheme.typography.labelSmall,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant
+                            )
+                            Text(
+                                text = SimpleDateFormat("MMM dd, yyyy", Locale.getDefault())
+                                    .format(Date(uiState.dateTimeMillis)),
                                 style = MaterialTheme.typography.bodyMedium,
                                 fontWeight = FontWeight.Medium
                             )
                         }
                     }
                 }
+
                 OutlinedCard(
                     onClick = { viewModel.showTime(true) },
                     modifier = Modifier.weight(1f),
@@ -129,11 +149,20 @@ fun AddReminderScreen(
                         verticalAlignment = Alignment.CenterVertically,
                         horizontalArrangement = Arrangement.spacedBy(8.dp)
                     ) {
-                        Icon(Icons.Rounded.Schedule, null, tint = MaterialTheme.colorScheme.primary, modifier = Modifier.size(20.dp))
+                        Icon(
+                            Icons.Rounded.Schedule, null,
+                            tint = MaterialTheme.colorScheme.primary,
+                            modifier = Modifier.size(20.dp)
+                        )
                         Column {
-                            Text("Time", style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
                             Text(
-                                text = SimpleDateFormat("hh:mm a", Locale.getDefault()).format(Date(uiState.dateTimeMillis)),
+                                "Time",
+                                style = MaterialTheme.typography.labelSmall,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant
+                            )
+                            Text(
+                                text = SimpleDateFormat("hh:mm a", Locale.getDefault())
+                                    .format(Date(uiState.dateTimeMillis)),
                                 style = MaterialTheme.typography.bodyMedium,
                                 fontWeight = FontWeight.Medium
                             )
@@ -201,14 +230,21 @@ fun AddReminderScreen(
             SectionLabel("Notifications")
             Card(
                 shape  = RoundedCornerShape(12.dp),
-                colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.4f))
+                colors = CardDefaults.cardColors(
+                    containerColor = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.4f)
+                )
             ) {
                 Column {
                     ListItem(
                         headlineContent   = { Text("Sound") },
                         supportingContent = { Text("Play notification sound") },
                         leadingContent    = { Icon(Icons.Rounded.VolumeUp, null) },
-                        trailingContent   = { Switch(checked = uiState.soundEnabled, onCheckedChange = { viewModel.setSound(it) }) },
+                        trailingContent   = {
+                            Switch(
+                                checked = uiState.soundEnabled,
+                                onCheckedChange = { viewModel.setSound(it) }
+                            )
+                        },
                         colors = ListItemDefaults.colors(containerColor = Color.Transparent)
                     )
                     HorizontalDivider()
@@ -216,27 +252,41 @@ fun AddReminderScreen(
                         headlineContent   = { Text("Vibration") },
                         supportingContent = { Text("Vibrate on notification") },
                         leadingContent    = { Icon(Icons.Rounded.Vibration, null) },
-                        trailingContent   = { Switch(checked = uiState.vibrationEnabled, onCheckedChange = { viewModel.setVibration(it) }) },
+                        trailingContent   = {
+                            Switch(
+                                checked = uiState.vibrationEnabled,
+                                onCheckedChange = { viewModel.setVibration(it) }
+                            )
+                        },
                         colors = ListItemDefaults.colors(containerColor = Color.Transparent)
                     )
                 }
             }
 
-            // Save button
+            // Save Button
             Button(
-                onClick = { save() },
+                onClick = { viewModel.saveReminder() },
                 modifier = Modifier.fillMaxWidth().height(52.dp),
-                shape = RoundedCornerShape(12.dp)
+                shape = RoundedCornerShape(12.dp),
+                enabled = !uiState.isSaving
             ) {
-                Icon(Icons.Rounded.Check, null, modifier = Modifier.size(20.dp))
-                Spacer(Modifier.width(8.dp))
-                Text("Save Reminder", fontWeight = FontWeight.Bold, fontSize = 16.sp)
+                if (uiState.isSaving) {
+                    CircularProgressIndicator(
+                        modifier = Modifier.size(20.dp),
+                        color = MaterialTheme.colorScheme.onPrimary
+                    )
+                } else {
+                    Icon(Icons.Rounded.Check, null, modifier = Modifier.size(20.dp))
+                    Spacer(Modifier.width(8.dp))
+                    Text("Save Reminder", fontWeight = FontWeight.Bold, fontSize = 16.sp)
+                }
             }
+
             Spacer(Modifier.height(32.dp))
         }
     }
 
-    // Date picker dialog
+    // Date Picker Dialog
     if (uiState.showDatePicker) {
         DatePickerDialog(
             onDismissRequest = { viewModel.showDate(false) },
@@ -252,14 +302,20 @@ fun AddReminderScreen(
         ) { DatePicker(state = datePickerState) }
     }
 
-    // Time picker dialog
+    // Time Picker Dialog
     if (uiState.showTimePicker) {
         AlertDialog(
             onDismissRequest = { viewModel.showTime(false) },
             title = { Text("Select Time") },
-            text  = { Box(Modifier.fillMaxWidth(), Alignment.Center) { TimePicker(state = timePickerState) } },
+            text = {
+                Box(Modifier.fillMaxWidth(), Alignment.Center) {
+                    TimePicker(state = timePickerState)
+                }
+            },
             confirmButton = {
-                TextButton(onClick = { viewModel.setTime(timePickerState.hour, timePickerState.minute) }) { Text("OK") }
+                TextButton(onClick = {
+                    viewModel.setTime(timePickerState.hour, timePickerState.minute)
+                }) { Text("OK") }
             },
             dismissButton = {
                 TextButton(onClick = { viewModel.showTime(false) }) { Text("Cancel") }
