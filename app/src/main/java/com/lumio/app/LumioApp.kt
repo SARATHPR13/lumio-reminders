@@ -4,6 +4,7 @@ import android.app.Application
 import android.app.NotificationChannel
 import android.app.NotificationManager
 import android.content.Context
+import android.graphics.Color
 import android.os.Build
 import androidx.hilt.work.HiltWorkerFactory
 import androidx.work.*
@@ -33,16 +34,12 @@ class LumioApp : Application(), Configuration.Provider {
     private fun schedulePeriodicWork() {
         val workManager = WorkManager.getInstance(this)
 
-        // ── Periodic reminder sync (every 6 hours) ────
-        val reminderRequest = PeriodicWorkRequestBuilder<ReminderWorker>(
-            6, TimeUnit.HOURS
-        )
-        .setConstraints(
-            Constraints.Builder()
-                .setRequiredNetworkType(NetworkType.NOT_REQUIRED)
-                .build()
-        )
-        .build()
+        val reminderRequest = PeriodicWorkRequestBuilder<ReminderWorker>(6, TimeUnit.HOURS)
+            .setConstraints(
+                Constraints.Builder()
+                    .setRequiredNetworkType(NetworkType.NOT_REQUIRED)
+                    .build()
+            ).build()
 
         workManager.enqueueUniquePeriodicWork(
             ReminderWorker.WORK_NAME,
@@ -50,16 +47,12 @@ class LumioApp : Application(), Configuration.Provider {
             reminderRequest
         )
 
-        // ── Auto backup (every 24 hours) ──────────────
-        val backupRequest = PeriodicWorkRequestBuilder<BackupWorker>(
-            24, TimeUnit.HOURS
-        )
-        .setConstraints(
-            Constraints.Builder()
-                .setRequiresStorageNotLow(true)
-                .build()
-        )
-        .build()
+        val backupRequest = PeriodicWorkRequestBuilder<BackupWorker>(24, TimeUnit.HOURS)
+            .setConstraints(
+                Constraints.Builder()
+                    .setRequiresStorageNotLow(true)
+                    .build()
+            ).build()
 
         workManager.enqueueUniquePeriodicWork(
             BackupWorker.WORK_NAME,
@@ -73,19 +66,23 @@ class LumioApp : Application(), Configuration.Provider {
             val manager = getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
 
             val reminderChannel = NotificationChannel(
-                CHANNEL_REMINDERS, "Reminders", NotificationManager.IMPORTANCE_HIGH
+                CHANNEL_REMINDERS,
+                "Reminders",
+                NotificationManager.IMPORTANCE_HIGH
             ).apply {
-                description = "Your scheduled reminders"
+                description  = "Your scheduled reminders"
                 enableVibration(true)
                 enableLights(true)
-                lightColor = android.graphics.Color.parseColor("#FF1A73E8")
+                lightColor   = Color.parseColor("#FF1A73E8")
                 setShowBadge(true)
             }
 
             val alarmChannel = NotificationChannel(
-                CHANNEL_ALARMS, "Priority Alarms", NotificationManager.IMPORTANCE_MAX
+                CHANNEL_ALARMS,
+                "Priority Alarms",
+                NotificationManager.IMPORTANCE_MAX
             ).apply {
-                description = "High-priority reminder alarms"
+                description  = "High-priority alarms"
                 enableVibration(true)
                 enableLights(true)
                 setBypassDnd(true)
@@ -93,9 +90,11 @@ class LumioApp : Application(), Configuration.Provider {
             }
 
             val silentChannel = NotificationChannel(
-                CHANNEL_SILENT, "Silent Reminders", NotificationManager.IMPORTANCE_LOW
+                CHANNEL_SILENT,
+                "Silent Reminders",
+                NotificationManager.IMPORTANCE_LOW
             ).apply {
-                description = "Silent notifications"
+                description  = "Silent notifications"
                 enableVibration(false)
                 setSound(null, null)
                 setShowBadge(false)
