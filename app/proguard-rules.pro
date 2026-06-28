@@ -1,0 +1,11 @@
+-keep class dagger.hilt.** { *; }
+-keep class javax.inject.** { *; }
+-keep class * extends androidx.room.RoomDatabase { *; }
+-keep @androidx.room.Entity class * { *; }
+-keep class com.lumio.app.data.** { *; }
+-keep class com.lumio.app.domain.model.** { *; }
+-keep class com.lumio.app.receiver.** { *; }
+-keep class com.lumio.app.widget.** { *; }
+-dontwarn dagger.hilt.**
+-dontwarn androidx.room.**
+-dontwarn kotlinx.coroutines.**

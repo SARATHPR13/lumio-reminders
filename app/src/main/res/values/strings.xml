@@ -1,0 +1,26 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">Lumio</string>
+    <string name="app_tagline">Smart Reminders</string>
+    <string name="widget_small_name">Lumio — Small</string>
+    <string name="widget_large_name">Lumio — Large</string>
+    <string name="nav_home">Home</string>
+    <string name="nav_calendar">Calendar</string>
+    <string name="nav_categories">Categories</string>
+    <string name="nav_settings">Settings</string>
+    <string name="action_add">Add Reminder</string>
+    <string name="action_save">Save</string>
+    <string name="action_cancel">Cancel</string>
+    <string name="action_delete">Delete</string>
+    <string name="action_done">Mark Done</string>
+    <string name="action_snooze">Snooze</string>
+    <string name="snooze_5_min">Snooze 5 min</string>
+    <string name="snooze_15_min">Snooze 15 min</string>
+    <string name="snooze_30_min">Snooze 30 min</string>
+    <string name="priority_urgent">Urgent</string>
+    <string name="priority_high">High</string>
+    <string name="priority_medium">Medium</string>
+    <string name="priority_low">Low</string>
+    <string name="empty_no_reminders">No reminders yet</string>
+    <string name="empty_add_hint">Tap + to add your first reminder</string>
+</resources>
