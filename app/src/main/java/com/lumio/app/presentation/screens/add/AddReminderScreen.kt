@@ -52,7 +52,7 @@ fun AddReminderScreen(
                 title = { Text("New Reminder", fontWeight = FontWeight.Bold) },
                 navigationIcon = {
                     IconButton(onClick = { navController.popBackStack() }) {
-                        Icon(Icons.Rounded.ArrowBack, contentDescription = "Back")
+                        Icon(Icons.AutoMirrored.Rounded.ArrowBack, contentDescription = "Back")
                     }
                 },
                 actions = {
@@ -238,7 +238,7 @@ fun AddReminderScreen(
                     ListItem(
                         headlineContent   = { Text("Sound") },
                         supportingContent = { Text("Play notification sound") },
-                        leadingContent    = { Icon(Icons.Rounded.VolumeUp, null) },
+                        leadingContent    = { Icon(Icons.AutoMirrored.Rounded.VolumeUp, null) },
                         trailingContent   = {
                             Switch(
                                 checked = uiState.soundEnabled,

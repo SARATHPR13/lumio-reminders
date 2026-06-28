@@ -156,7 +156,7 @@ fun SettingsScreen(
             item {
                 SettingsCard {
                     SettingsToggle(
-                        icon     = Icons.Rounded.VolumeUp,
+                        icon     = Icons.AutoMirrored.Rounded.VolumeUp,
                         title    = "Default Sound",
                         subtitle = "Play sound for new reminders",
                         checked  = uiState.defaultSound,

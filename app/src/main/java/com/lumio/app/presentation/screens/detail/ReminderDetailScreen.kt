@@ -42,7 +42,7 @@ fun ReminderDetailScreen(
                 title = { Text("Reminder", fontWeight = FontWeight.Bold) },
                 navigationIcon = {
                     IconButton(onClick = { navController.popBackStack() }) {
-                        Icon(Icons.Rounded.ArrowBack, contentDescription = "Back")
+                        Icon(Icons.AutoMirrored.Rounded.ArrowBack, contentDescription = "Back")
                     }
                 },
                 actions = {
@@ -209,7 +209,7 @@ private fun DetailContent(
 
                 HorizontalDivider(modifier = Modifier.padding(horizontal = 16.dp))
                 InfoRow(
-                    icon  = if (reminder.soundEnabled) Icons.Rounded.VolumeUp else Icons.Rounded.VolumeOff,
+                    icon  = if (reminder.soundEnabled) Icons.AutoMirrored.Rounded.VolumeUp else Icons.AutoMirrored.Rounded.VolumeOff,
                     label = "Sound",
                     value = if (reminder.soundEnabled) "Enabled" else "Disabled",
                     color = MaterialTheme.colorScheme.onSurfaceVariant

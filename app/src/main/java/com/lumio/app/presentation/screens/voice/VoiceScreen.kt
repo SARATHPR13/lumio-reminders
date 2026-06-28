@@ -47,7 +47,7 @@ fun VoiceScreen(
                         viewModel.stopListening()
                         navController.popBackStack()
                     }) {
-                        Icon(Icons.Rounded.ArrowBack, "Back")
+                        Icon(Icons.AutoMirrored.Rounded.ArrowBack, "Back")
                     }
                 },
                 actions = {
