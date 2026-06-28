@@ -14,10 +14,15 @@ class DateTimeParserTest {
     @Test
     fun `parses today correctly`() {
         val result = DateTimeParser.parse("remind me today at 3 PM")
-        val today  = Calendar.getInstance()
-        val parsed = Calendar.getInstance().apply { timeInMillis = result.millis }
-        assertEquals("Day should be today",
-            today.get(Calendar.DAY_OF_YEAR), parsed.get(Calendar.DAY_OF_YEAR))
+        val today    = Calendar.getInstance()
+        val tomorrow = Calendar.getInstance().apply { add(Calendar.DAY_OF_YEAR, 1) }
+        val parsed   = Calendar.getInstance().apply { timeInMillis = result.millis }
+        val isToday    = parsed.get(Calendar.DAY_OF_YEAR) == today.get(Calendar.DAY_OF_YEAR)
+        val isTomorrow = parsed.get(Calendar.DAY_OF_YEAR) == tomorrow.get(Calendar.DAY_OF_YEAR)
+        assertTrue("Should be today or tomorrow (past times get pushed forward)",
+            isToday || isTomorrow)
+        assertTrue("Result should always be in the future",
+            result.millis > System.currentTimeMillis())
     }
 
     @Test
