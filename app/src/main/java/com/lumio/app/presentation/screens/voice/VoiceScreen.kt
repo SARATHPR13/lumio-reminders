@@ -511,7 +511,7 @@ private fun SuggestionsSection(
                         modifier = Modifier.weight(1f)
                     )
                     Icon(
-                        Icons.AutoMirrored.Rounded.PlayArrow, null,
+                        Icons.Rounded.PlayArrow, null,
                         tint     = MaterialTheme.colorScheme.primary,
                         modifier = Modifier.size(16.dp)
                     )
