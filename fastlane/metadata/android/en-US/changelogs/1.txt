@@ -1,0 +1,9 @@
+Version 1.0 - Initial Release
+- AI Chat Assistant
+- Voice reminders
+- Location reminders
+- Weather alerts
+- Health templates
+- Widgets
+- Dark/AMOLED themes
+- Malayalam, Hindi, Tamil, Telugu support

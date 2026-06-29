@@ -1,0 +1,1 @@
+Smart reminder app with AI assistant, voice input and location reminders

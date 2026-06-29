@@ -1,0 +1,58 @@
+LUMIO - Luminous Intelligent Organizer
+
+Never forget anything important again! LUMIO is a beautiful, AI-powered reminder app that understands natural language and helps you stay organized every day.
+
+KEY FEATURES:
+
+AI CHAT ASSISTANT
+Talk to LUMIO AI naturally: "Remind me every last Friday at 5 PM to submit the report" and it instantly creates the perfect reminder with the right category, priority and repeat schedule.
+
+VOICE REMINDERS
+Just speak your reminder out loud. LUMIO understands complex phrases like "Call mom tomorrow evening" and converts them to scheduled reminders automatically.
+
+SMART LOCATION REMINDERS
+Set reminders triggered by location. "Remind me to call manager when I reach office" - LUMIO monitors your location and fires the reminder at exactly the right moment.
+
+WEATHER-BASED REMINDERS
+Get smart alerts based on live weather. LUMIO notifies you to carry an umbrella when rain is expected, drink extra water during heat waves, or wear a jacket in cold weather.
+
+HEALTH REMINDER TEMPLATES
+15 pre-built health reminders for medicine, water, exercise, meditation, sleep and more. Add them all with one tap.
+
+BEAUTIFUL DESIGN
+Dark, Light, AMOLED and System themes. Gradient stat cards. Smooth animations. Looks great on any Android phone.
+
+SMART CATEGORIES
+10 built-in categories: Work, Home, Shopping, Bills, Study, Health, Events, Personal, Travel, Finance. AI auto-categorizes your reminders.
+
+HOME SCREEN WIDGETS
+3 widget styles: Small, Large, and Transparent. See your upcoming reminders without opening the app.
+
+PRIVACY & SECURITY
+PIN lock and fingerprint protection. Your data stays on your device. No account required.
+
+STATISTICS & INSIGHTS
+Track your completion rate, productive hours, streak days and more.
+
+MULTILINGUAL
+Full support for English, Malayalam, Hindi, Tamil and Telugu.
+
+RECURRING REMINDERS
+Daily, weekly, monthly, yearly or custom repeat schedules. Never miss important recurring tasks.
+
+PRIORITY LEVELS
+Mark reminders as Urgent, High, Medium, Low or None. Color-coded for quick scanning.
+
+MOTIVATIONAL QUOTES
+Daily quote to keep you inspired and productive.
+
+BACKUP & RESTORE
+Export and import your reminders. Never lose your data.
+
+NOTIFICATION ACTIONS
+Snooze for 5, 15 or 30 minutes or mark as done directly from the notification.
+
+OPEN SOURCE
+LUMIO is built with modern Android development: Kotlin, Jetpack Compose, Room, Hilt, WorkManager.
+
+Download LUMIO today and transform how you manage your reminders!
