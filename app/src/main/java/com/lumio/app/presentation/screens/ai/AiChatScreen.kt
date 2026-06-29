@@ -24,8 +24,8 @@ import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.navigation.NavController
 import com.lumio.app.ai.ChatMessage
-import com.lumio.app.ai.SmartTimeSuggester
 import com.lumio.app.ai.SuggestedReminder
+import com.lumio.app.ai.TimeSuggestion
 import com.lumio.app.domain.model.Priority
 import com.lumio.app.domain.model.RepeatType
 
@@ -43,7 +43,10 @@ fun AiChatScreen(
             listState.animateScrollToItem(uiState.messages.size - 1)
     }
     LaunchedEffect(uiState.successMessage) {
-        uiState.successMessage?.let { snackbar.showSnackbar(it); viewModel.clearMessages() }
+        uiState.successMessage?.let {
+            snackbar.showSnackbar(it)
+            viewModel.clearMessages()
+        }
     }
 
     Scaffold(
@@ -64,7 +67,7 @@ fun AiChatScreen(
                                     )
                                 ),
                             contentAlignment = Alignment.Center
-                        ) { Text("\uD83E\uDD16", fontSize = 18.sp) }
+                        ) { Text("AI", fontSize = 14.sp, color = Color.White, fontWeight = FontWeight.Bold) }
                         Column {
                             Text("LUMIO AI",
                                 fontWeight = FontWeight.ExtraBold,
@@ -117,14 +120,13 @@ fun AiChatScreen(
                     item {
                         TimeSuggestCard(
                             suggestions = uiState.timeSuggestions,
-                            onSelect    = { s -> viewModel.useTimeSuggestion(s.hour, s.minute, s.label) },
+                            onSelect    = { s -> viewModel.useTimeSuggestion(s) },
                             onDismiss   = { viewModel.dismissTimeSuggestions() }
                         )
                     }
                 }
             }
 
-            // Quick suggestions (shown only at start)
             if (uiState.messages.size <= 1) {
                 LazyRow(
                     contentPadding        = PaddingValues(horizontal = 16.dp, vertical = 8.dp),
@@ -172,12 +174,10 @@ private fun MessageBubble(
                     .size(32.dp)
                     .clip(CircleShape)
                     .background(
-                        Brush.linearGradient(
-                            listOf(Color(0xFF1A73E8), Color(0xFF7B2FBE))
-                        )
+                        Brush.linearGradient(listOf(Color(0xFF1A73E8), Color(0xFF7B2FBE)))
                     ),
                 contentAlignment = Alignment.Center
-            ) { Text("\uD83E\uDD16", fontSize = 14.sp) }
+            ) { Text("AI", fontSize = 11.sp, color = Color.White, fontWeight = FontWeight.Bold) }
             Spacer(Modifier.width(8.dp))
         }
 
@@ -197,9 +197,7 @@ private fun MessageBubble(
                     )
                     .background(
                         if (message.isUser)
-                            Brush.linearGradient(
-                                listOf(Color(0xFF1A73E8), Color(0xFF7B2FBE))
-                            )
+                            Brush.linearGradient(listOf(Color(0xFF1A73E8), Color(0xFF7B2FBE)))
                         else
                             Brush.linearGradient(
                                 listOf(
@@ -211,17 +209,17 @@ private fun MessageBubble(
                     .padding(12.dp)
             ) {
                 Text(
-                    text      = message.text,
-                    style     = MaterialTheme.typography.bodyMedium,
-                    color     = if (message.isUser) Color.White
-                                else MaterialTheme.colorScheme.onSurfaceVariant,
+                    text       = message.text,
+                    style      = MaterialTheme.typography.bodyMedium,
+                    color      = if (message.isUser) Color.White
+                                 else MaterialTheme.colorScheme.onSurfaceVariant,
                     lineHeight = 22.sp
                 )
             }
 
             message.suggestedReminder?.let { reminder ->
                 Spacer(Modifier.height(8.dp))
-                ReminderCard(
+                ReminderPreviewCard(
                     reminder  = reminder,
                     onSave    = onSave,
                     onDismiss = onDismiss
@@ -254,7 +252,7 @@ private fun MessageBubble(
 }
 
 @Composable
-private fun ReminderCard(
+private fun ReminderPreviewCard(
     reminder: SuggestedReminder,
     onSave: () -> Unit,
     onDismiss: () -> Unit
@@ -268,7 +266,7 @@ private fun ReminderCard(
     ) {
         Column(
             modifier            = Modifier.padding(14.dp),
-            verticalArrangement = Arrangement.spacedBy(10.dp)
+            verticalArrangement = Arrangement.spacedBy(8.dp)
         ) {
             Row(
                 verticalAlignment     = Alignment.CenterVertically,
@@ -287,29 +285,46 @@ private fun ReminderCard(
                     reminder.confidence > 0.6f -> Color(0xFFF9A825)
                     else                       -> Color(0xFFFF6B35)
                 }
-                Surface(shape = RoundedCornerShape(20.dp), color = cColor.copy(alpha = 0.15f)) {
-                    Text("${(reminder.confidence * 100).toInt()}%",
+                Surface(
+                    shape = RoundedCornerShape(20.dp),
+                    color = cColor.copy(alpha = 0.15f)
+                ) {
+                    Text(
+                        "${(reminder.confidence * 100).toInt()}%",
                         modifier   = Modifier.padding(horizontal = 8.dp, vertical = 3.dp),
-                        fontSize   = 11.sp, color = cColor, fontWeight = FontWeight.Bold)
+                        fontSize   = 11.sp,
+                        color      = cColor,
+                        fontWeight = FontWeight.Bold
+                    )
                 }
             }
 
             HorizontalDivider()
-
-            Text(reminder.title, style = MaterialTheme.typography.titleSmall, fontWeight = FontWeight.Bold)
-            DetailRow("\uD83D\uDCC5", reminder.dateDescription)
-            DetailRow("\u23F0", reminder.timeDescription)
-            if (reminder.repeatType != RepeatType.NONE) DetailRow("\uD83D\uDD04", "Repeats: ${reminder.repeatType.label}")
-            if (reminder.category != null) DetailRow(reminder.category.emoji, reminder.category.name)
-            if (reminder.priority != Priority.NONE) DetailRow(reminder.priority.emoji, "${reminder.priority.label} Priority")
+            Text(reminder.title,
+                style      = MaterialTheme.typography.titleSmall,
+                fontWeight = FontWeight.Bold)
+            DetailRow("Date", reminder.dateDescription)
+            DetailRow("Time", reminder.timeDescription)
+            if (reminder.repeatType != RepeatType.NONE)
+                DetailRow("Repeat", reminder.repeatType.label)
+            if (reminder.category != null)
+                DetailRow(reminder.category.emoji, reminder.category.name)
+            if (reminder.priority != Priority.NONE)
+                DetailRow(reminder.priority.emoji, "${reminder.priority.label} Priority")
 
             HorizontalDivider()
 
             Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                OutlinedButton(onClick = onDismiss, modifier = Modifier.weight(1f), shape = RoundedCornerShape(10.dp)) {
-                    Text("Cancel")
-                }
-                Button(onClick = onSave, modifier = Modifier.weight(2f), shape = RoundedCornerShape(10.dp)) {
+                OutlinedButton(
+                    onClick  = onDismiss,
+                    modifier = Modifier.weight(1f),
+                    shape    = RoundedCornerShape(10.dp)
+                ) { Text("Cancel") }
+                Button(
+                    onClick  = onSave,
+                    modifier = Modifier.weight(2f),
+                    shape    = RoundedCornerShape(10.dp)
+                ) {
                     Icon(Icons.Rounded.Check, null, modifier = Modifier.size(16.dp))
                     Spacer(Modifier.width(6.dp))
                     Text("Save Reminder", fontWeight = FontWeight.Bold)
@@ -320,29 +335,68 @@ private fun ReminderCard(
 }
 
 @Composable
-private fun DetailRow(emoji: String, text: String) {
-    Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-        Text(emoji, fontSize = 14.sp, modifier = Modifier.width(24.dp))
-        Text(text, style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+private fun DetailRow(label: String, value: String) {
+    Row(
+        verticalAlignment     = Alignment.CenterVertically,
+        horizontalArrangement = Arrangement.spacedBy(8.dp)
+    ) {
+        Text(label,
+            style    = MaterialTheme.typography.labelSmall,
+            color    = MaterialTheme.colorScheme.onSurfaceVariant,
+            modifier = Modifier.width(48.dp))
+        Text(value,
+            style = MaterialTheme.typography.bodySmall,
+            color = MaterialTheme.colorScheme.onSurface)
     }
 }
 
 @Composable
 private fun TypingDots() {
-    Row(verticalAlignment = Alignment.Bottom, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+    Row(
+        verticalAlignment     = Alignment.Bottom,
+        horizontalArrangement = Arrangement.spacedBy(8.dp)
+    ) {
         Box(
-            modifier = Modifier.size(32.dp).clip(CircleShape)
-                .background(Brush.linearGradient(listOf(Color(0xFF1A73E8), Color(0xFF7B2FBE)))),
+            modifier = Modifier
+                .size(32.dp)
+                .clip(CircleShape)
+                .background(
+                    Brush.linearGradient(listOf(Color(0xFF1A73E8), Color(0xFF7B2FBE)))
+                ),
             contentAlignment = Alignment.Center
-        ) { Text("\uD83E\uDD16", fontSize = 14.sp) }
-        Card(shape = RoundedCornerShape(20.dp), colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant)) {
-            Row(modifier = Modifier.padding(horizontal = 16.dp, vertical = 12.dp), horizontalArrangement = Arrangement.spacedBy(4.dp), verticalAlignment = Alignment.CenterVertically) {
+        ) { Text("AI", fontSize = 11.sp, color = Color.White, fontWeight = FontWeight.Bold) }
+
+        Card(
+            shape  = RoundedCornerShape(20.dp),
+            colors = CardDefaults.cardColors(
+                containerColor = MaterialTheme.colorScheme.surfaceVariant
+            )
+        ) {
+            Row(
+                modifier              = Modifier.padding(horizontal = 16.dp, vertical = 12.dp),
+                horizontalArrangement = Arrangement.spacedBy(4.dp),
+                verticalAlignment     = Alignment.CenterVertically
+            ) {
                 repeat(3) { index ->
                     val inf = rememberInfiniteTransition(label = "d$index")
-                    val y by inf.animateFloat(initialValue = 0f, targetValue = -6f,
-                        animationSpec = infiniteRepeatable(tween(400, delayMillis = index * 130), RepeatMode.Reverse), label = "d$index")
-                    Box(modifier = Modifier.size(8.dp).offset(y = y.dp).clip(CircleShape)
-                        .background(MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.5f)))
+                    val y by inf.animateFloat(
+                        initialValue  = 0f,
+                        targetValue   = -6f,
+                        animationSpec = infiniteRepeatable(
+                            animation  = tween(400, delayMillis = index * 130),
+                            repeatMode = RepeatMode.Reverse
+                        ),
+                        label = "d$index"
+                    )
+                    Box(
+                        modifier = Modifier
+                            .size(8.dp)
+                            .offset(y = y.dp)
+                            .clip(CircleShape)
+                            .background(
+                                MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.5f)
+                            )
+                    )
                 }
             }
         }
@@ -351,26 +405,57 @@ private fun TypingDots() {
 
 @Composable
 private fun TimeSuggestCard(
-    suggestions: List<SmartTimeSuggester.TimeSuggestion>,
-    onSelect: (SmartTimeSuggester.TimeSuggestion) -> Unit,
+    suggestions: List<TimeSuggestion>,
+    onSelect: (TimeSuggestion) -> Unit,
     onDismiss: () -> Unit
 ) {
-    Card(shape = RoundedCornerShape(16.dp), colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.secondaryContainer)) {
-        Column(modifier = Modifier.padding(14.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
-            Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                Icon(Icons.Rounded.AutoAwesome, null, tint = MaterialTheme.colorScheme.onSecondaryContainer, modifier = Modifier.size(16.dp))
-                Text("AI Suggested Times", style = MaterialTheme.typography.labelLarge, fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.onSecondaryContainer, modifier = Modifier.weight(1f))
-                IconButton(onClick = onDismiss, modifier = Modifier.size(24.dp)) {
-                    Icon(Icons.Rounded.Close, null, tint = MaterialTheme.colorScheme.onSecondaryContainer, modifier = Modifier.size(16.dp))
+    Card(
+        shape  = RoundedCornerShape(16.dp),
+        colors = CardDefaults.cardColors(
+            containerColor = MaterialTheme.colorScheme.secondaryContainer
+        )
+    ) {
+        Column(
+            modifier            = Modifier.padding(14.dp),
+            verticalArrangement = Arrangement.spacedBy(8.dp)
+        ) {
+            Row(
+                verticalAlignment     = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.spacedBy(8.dp)
+            ) {
+                Icon(Icons.Rounded.AutoAwesome, null,
+                    tint     = MaterialTheme.colorScheme.onSecondaryContainer,
+                    modifier = Modifier.size(16.dp))
+                Text("AI Suggested Times",
+                    style      = MaterialTheme.typography.labelLarge,
+                    fontWeight = FontWeight.Bold,
+                    color      = MaterialTheme.colorScheme.onSecondaryContainer,
+                    modifier   = Modifier.weight(1f))
+                IconButton(
+                    onClick  = onDismiss,
+                    modifier = Modifier.size(24.dp)
+                ) {
+                    Icon(Icons.Rounded.Close, null,
+                        tint     = MaterialTheme.colorScheme.onSecondaryContainer,
+                        modifier = Modifier.size(16.dp))
                 }
             }
-            suggestions.take(4).forEach { s ->
-                OutlinedButton(onClick = { onSelect(s) }, modifier = Modifier.fillMaxWidth(), shape = RoundedCornerShape(10.dp)) {
+            suggestions.forEach { s ->
+                OutlinedButton(
+                    onClick  = { onSelect(s) },
+                    modifier = Modifier.fillMaxWidth(),
+                    shape    = RoundedCornerShape(10.dp)
+                ) {
                     Text(s.emoji, fontSize = 16.sp)
                     Spacer(Modifier.width(8.dp))
-                    Column(Modifier.weight(1f), horizontalAlignment = Alignment.Start) {
+                    Column(
+                        Modifier.weight(1f),
+                        horizontalAlignment = Alignment.Start
+                    ) {
                         Text(s.label, fontWeight = FontWeight.SemiBold, fontSize = 13.sp)
-                        Text(s.reason, fontSize = 10.sp, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                        Text(s.reason,
+                            fontSize = 10.sp,
+                            color    = MaterialTheme.colorScheme.onSurfaceVariant)
                     }
                 }
             }
@@ -379,7 +464,12 @@ private fun TimeSuggestCard(
 }
 
 @Composable
-private fun InputBar(text: String, onText: (String) -> Unit, onSend: () -> Unit, isTyping: Boolean) {
+private fun InputBar(
+    text: String,
+    onText: (String) -> Unit,
+    onSend: () -> Unit,
+    isTyping: Boolean
+) {
     Surface(tonalElevation = 4.dp, modifier = Modifier.fillMaxWidth()) {
         Row(
             modifier              = Modifier.fillMaxWidth().padding(12.dp),
@@ -397,13 +487,26 @@ private fun InputBar(text: String, onText: (String) -> Unit, onSend: () -> Unit,
             FloatingActionButton(
                 onClick        = { if (!isTyping) onSend() },
                 modifier       = Modifier.size(48.dp),
-                containerColor = if (isTyping || text.isBlank()) MaterialTheme.colorScheme.surfaceVariant else MaterialTheme.colorScheme.primary,
-                contentColor   = if (isTyping || text.isBlank()) MaterialTheme.colorScheme.onSurfaceVariant else MaterialTheme.colorScheme.onPrimary,
+                containerColor = if (isTyping || text.isBlank())
+                    MaterialTheme.colorScheme.surfaceVariant
+                else
+                    MaterialTheme.colorScheme.primary,
+                contentColor   = if (isTyping || text.isBlank())
+                    MaterialTheme.colorScheme.onSurfaceVariant
+                else
+                    MaterialTheme.colorScheme.onPrimary,
                 shape          = CircleShape,
                 elevation      = FloatingActionButtonDefaults.elevation(0.dp)
             ) {
-                if (isTyping) CircularProgressIndicator(modifier = Modifier.size(22.dp), strokeWidth = 2.dp)
-                else Icon(Icons.AutoMirrored.Rounded.Send, "Send", modifier = Modifier.size(22.dp))
+                if (isTyping) {
+                    CircularProgressIndicator(
+                        modifier    = Modifier.size(22.dp),
+                        strokeWidth = 2.dp
+                    )
+                } else {
+                    Icon(Icons.AutoMirrored.Rounded.Send, "Send",
+                        modifier = Modifier.size(22.dp))
+                }
             }
         }
     }
