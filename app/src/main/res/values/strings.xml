@@ -24,6 +24,4 @@
     <string name="widget_small_name">LUMIO Small</string>
     <string name="widget_large_name">LUMIO Large</string>
     <string name="widget_transparent_name">LUMIO Transparent</string>
-    <string name="weather_api_key">YOUR_OPENWEATHER_API_KEY</string>
-    <string name="google_maps_key">YOUR_MAPS_API_KEY_HERE</string>
 </resources>
