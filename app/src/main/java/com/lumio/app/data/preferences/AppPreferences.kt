@@ -4,7 +4,6 @@ import android.content.Context
 import androidx.datastore.core.DataStore
 import androidx.datastore.preferences.core.*
 import androidx.datastore.preferences.preferencesDataStore
-import com.lumio.app.presentation.theme.ThemeMode
 import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.catch
@@ -42,9 +41,9 @@ class AppPreferences @Inject constructor(
     val themeMode: Flow<ThemeMode> = dataStore.data
         .catch { emit(emptyPreferences()) }
         .map { prefs ->
-            ThemeMode.valueOf(
-                prefs[KEY_THEME_MODE] ?: ThemeMode.SYSTEM.name
-            )
+            
+                prefs[KEY_THEME_MODE] ?: "system"
+            
         }
 
     suspend fun setThemeMode(mode: ThemeMode) {
