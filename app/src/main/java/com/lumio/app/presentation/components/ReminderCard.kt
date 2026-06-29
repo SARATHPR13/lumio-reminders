@@ -5,7 +5,6 @@ import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.rounded.*
-import androidx.compose.material.icons.automirrored.rounded.*
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -23,102 +22,120 @@ import com.lumio.app.domain.model.RepeatType
 
 @Composable
 fun ReminderCard(
-    reminder: Reminder,
-    onTap: () -> Unit,
+    reminder  : Reminder,
+    onTap     : () -> Unit,
     onComplete: (Boolean) -> Unit,
-    onDelete: () -> Unit,
-    modifier: Modifier = Modifier
+    onDelete  : () -> Unit,
+    modifier  : Modifier = Modifier
 ) {
-    val priorityColor = if (reminder.priority != Priority.NONE)
-        Color(android.graphics.Color.parseColor(reminder.priority.colorHex))
-    else MaterialTheme.colorScheme.outlineVariant
+    val priorityColor = when (reminder.priority) {
+        Priority.URGENT -> Color(0xFFDC2626)
+        Priority.HIGH   -> Color(0xFFEA580C)
+        Priority.MEDIUM -> Color(0xFFD97706)
+        Priority.LOW    -> Color(0xFF059669)
+        Priority.NONE   -> MaterialTheme.colorScheme.outlineVariant
+    }
 
     val dismissState = rememberSwipeToDismissBoxState(
-        confirmValueChange = { value ->
-            if (value == SwipeToDismissBoxValue.EndToStart) {
-                onDelete()
-                true
-            } else false
+        confirmValueChange = {
+            if (it == SwipeToDismissBoxValue.EndToStart) { onDelete(); true }
+            else false
         }
     )
 
     SwipeToDismissBox(
-        state                   = dismissState,
-        modifier                = modifier.padding(horizontal = 16.dp, vertical = 4.dp),
+        state                       = dismissState,
+        modifier                    = modifier.padding(horizontal = 16.dp, vertical = 5.dp),
         enableDismissFromStartToEnd = false,
         backgroundContent = {
             Box(
                 modifier = Modifier
                     .fillMaxSize()
-                    .clip(RoundedCornerShape(16.dp))
-                    .background(MaterialTheme.colorScheme.errorContainer),
+                    .clip(RoundedCornerShape(20.dp))
+                    .background(Color(0xFFDC2626)),
                 contentAlignment = Alignment.CenterEnd
             ) {
-                Icon(
-                    imageVector        = Icons.Rounded.Delete,
-                    contentDescription = "Delete",
-                    tint               = MaterialTheme.colorScheme.onErrorContainer,
-                    modifier           = Modifier.padding(end = 24.dp)
-                )
+                Column(
+                    modifier            = Modifier.padding(end = 24.dp),
+                    horizontalAlignment = Alignment.CenterHorizontally,
+                    verticalArrangement = Arrangement.spacedBy(4.dp)
+                ) {
+                    Icon(Icons.Rounded.DeleteOutline, null,
+                        tint     = Color.White,
+                        modifier = Modifier.size(24.dp))
+                    Text("Delete", color = Color.White, fontSize = 11.sp, fontWeight = FontWeight.SemiBold)
+                }
             }
         }
     ) {
         Card(
             onClick   = onTap,
-            shape     = RoundedCornerShape(16.dp),
+            shape     = RoundedCornerShape(20.dp),
             colors    = CardDefaults.cardColors(
                 containerColor = if (reminder.isCompleted)
-                    MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f)
+                    MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.4f)
                 else MaterialTheme.colorScheme.surface
             ),
             elevation = CardDefaults.cardElevation(
-                defaultElevation = if (reminder.isCompleted) 0.dp else 2.dp
+                defaultElevation = if (reminder.isCompleted) 0.dp else 1.dp
             ),
             modifier  = Modifier.fillMaxWidth()
         ) {
             Row(
-                modifier            = Modifier
-                    .fillMaxWidth()
-                    .padding(end = 12.dp, top = 12.dp, bottom = 12.dp),
-                verticalAlignment   = Alignment.CenterVertically
+                modifier          = Modifier.fillMaxWidth().padding(16.dp),
+                verticalAlignment = Alignment.CenterVertically
             ) {
-                // Priority color bar
+                // Priority indicator
                 Box(
                     modifier = Modifier
-                        .width(4.dp)
-                        .height(52.dp)
-                        .clip(RoundedCornerShape(topEnd = 4.dp, bottomEnd = 4.dp))
-                        .background(
-                            priorityColor.copy(
-                                alpha = if (reminder.isCompleted) 0.3f else 1f
-                            )
-                        )
+                        .width(3.dp)
+                        .height(44.dp)
+                        .clip(RoundedCornerShape(2.dp))
+                        .background(priorityColor.copy(alpha = if (reminder.isCompleted) 0.25f else 1f))
                 )
-                Spacer(Modifier.width(10.dp))
+
+                Spacer(Modifier.width(12.dp))
+
                 // Checkbox
-                Checkbox(
-                    checked        = reminder.isCompleted,
-                    onCheckedChange= onComplete,
-                    colors         = CheckboxDefaults.colors(
-                        checkedColor   = MaterialTheme.colorScheme.primary,
-                        uncheckedColor = priorityColor
+                Box(
+                    modifier = Modifier
+                        .size(24.dp)
+                        .clip(RoundedCornerShape(8.dp))
+                        .background(
+                            if (reminder.isCompleted)
+                                MaterialTheme.colorScheme.primary.copy(alpha = 0.15f)
+                            else
+                                priorityColor.copy(alpha = 0.1f)
+                        ),
+                    contentAlignment = Alignment.Center
+                ) {
+                    Checkbox(
+                        checked        = reminder.isCompleted,
+                        onCheckedChange= onComplete,
+                        modifier       = Modifier.size(20.dp),
+                        colors         = CheckboxDefaults.colors(
+                            checkedColor   = MaterialTheme.colorScheme.primary,
+                            uncheckedColor = priorityColor
+                        )
                     )
-                )
-                Spacer(Modifier.width(8.dp))
+                }
+
+                Spacer(Modifier.width(12.dp))
+
                 // Content
                 Column(modifier = Modifier.weight(1f)) {
                     Text(
-                        text          = reminder.title,
-                        style         = MaterialTheme.typography.titleSmall,
-                        fontWeight    = FontWeight.SemiBold,
-                        maxLines      = 1,
-                        overflow      = TextOverflow.Ellipsis,
-                        color         = if (reminder.isCompleted)
-                            MaterialTheme.colorScheme.onSurface.copy(alpha = 0.45f)
+                        text           = reminder.title,
+                        style          = MaterialTheme.typography.titleSmall,
+                        fontWeight     = FontWeight.SemiBold,
+                        maxLines       = 1,
+                        overflow       = TextOverflow.Ellipsis,
+                        color          = if (reminder.isCompleted)
+                            MaterialTheme.colorScheme.onSurface.copy(alpha = 0.4f)
                         else MaterialTheme.colorScheme.onSurface,
-                        textDecoration = if (reminder.isCompleted)
-                            TextDecoration.LineThrough else null
+                        textDecoration = if (reminder.isCompleted) TextDecoration.LineThrough else null
                     )
+
                     if (reminder.description.isNotBlank() && !reminder.isCompleted) {
                         Text(
                             text     = reminder.description,
@@ -129,56 +146,71 @@ fun ReminderCard(
                             modifier = Modifier.padding(top = 2.dp)
                         )
                     }
+
+                    Spacer(Modifier.height(8.dp))
+
                     Row(
-                        modifier              = Modifier.padding(top = 6.dp),
                         horizontalArrangement = Arrangement.spacedBy(6.dp),
                         verticalAlignment     = Alignment.CenterVertically
                     ) {
-                        Icon(
-                            imageVector        =
-                                if (reminder.isOverdue && !reminder.isCompleted)
-                                    Icons.Rounded.Warning
-                                else Icons.Rounded.Schedule,
-                            contentDescription = null,
-                            modifier           = Modifier.size(11.dp),
-                            tint               =
-                                if (reminder.isOverdue && !reminder.isCompleted)
-                                    Color(0xFFD32F2F)
-                                else MaterialTheme.colorScheme.onSurfaceVariant
-                        )
-                        Text(
-                            text  = reminder.formattedDateTime,
-                            fontSize = 11.sp,
+                        // Time chip
+                        Surface(
+                            shape = RoundedCornerShape(6.dp),
                             color = if (reminder.isOverdue && !reminder.isCompleted)
-                                Color(0xFFD32F2F)
-                            else MaterialTheme.colorScheme.onSurfaceVariant
-                        )
-                        if (reminder.category != null) {
-                            val catColor = Color(
-                                android.graphics.Color.parseColor(reminder.category.colorHex)
-                            )
-                            Text(
-                                text     = "${reminder.category.emoji} ${reminder.category.name}",
-                                fontSize = 10.sp,
-                                color    = catColor,
-                                modifier = Modifier
-                                    .clip(RoundedCornerShape(4.dp))
-                                    .background(catColor.copy(alpha = 0.1f))
-                                    .padding(horizontal = 5.dp, vertical = 1.dp)
-                            )
+                                Color(0xFFDC2626).copy(alpha = 0.1f)
+                            else MaterialTheme.colorScheme.surfaceVariant
+                        ) {
+                            Row(
+                                modifier              = Modifier.padding(horizontal = 7.dp, vertical = 3.dp),
+                                verticalAlignment     = Alignment.CenterVertically,
+                                horizontalArrangement = Arrangement.spacedBy(4.dp)
+                            ) {
+                                Icon(
+                                    if (reminder.isOverdue && !reminder.isCompleted)
+                                        Icons.Rounded.Warning
+                                    else Icons.Rounded.Schedule,
+                                    null,
+                                    modifier = Modifier.size(10.dp),
+                                    tint     = if (reminder.isOverdue && !reminder.isCompleted)
+                                        Color(0xFFDC2626)
+                                    else MaterialTheme.colorScheme.onSurfaceVariant
+                                )
+                                Text(
+                                    text     = reminder.formattedDateTime,
+                                    fontSize = 11.sp,
+                                    color    = if (reminder.isOverdue && !reminder.isCompleted)
+                                        Color(0xFFDC2626)
+                                    else MaterialTheme.colorScheme.onSurfaceVariant,
+                                    fontWeight = if (reminder.isOverdue && !reminder.isCompleted)
+                                        FontWeight.SemiBold else FontWeight.Normal
+                                )
+                            }
                         }
+
+                        // Category chip
+                        reminder.category?.let { cat ->
+                            val catColor = Color(android.graphics.Color.parseColor(cat.colorHex))
+                            Surface(
+                                shape = RoundedCornerShape(6.dp),
+                                color = catColor.copy(alpha = 0.1f)
+                            ) {
+                                Text(
+                                    text     = "${cat.emoji} ${cat.name}",
+                                    fontSize = 10.sp,
+                                    color    = catColor,
+                                    modifier = Modifier.padding(horizontal = 7.dp, vertical = 3.dp),
+                                    fontWeight = FontWeight.Medium
+                                )
+                            }
+                        }
+
+                        // Repeat indicator
                         if (reminder.repeatType != RepeatType.NONE) {
-                            Icon(
-                                imageVector        = Icons.Rounded.Repeat,
-                                contentDescription = null,
-                                modifier           = Modifier.size(11.dp),
-                                tint               = MaterialTheme.colorScheme.primary
-                            )
+                            Icon(Icons.Rounded.Repeat, null,
+                                modifier = Modifier.size(12.dp),
+                                tint     = MaterialTheme.colorScheme.primary)
                         }
                     }
-                }
-                if (reminder.priority != Priority.NONE && !reminder.isCompleted) {
-                    PriorityBadge(priority = reminder.priority, showLabel = false)
                 }
             }
         }

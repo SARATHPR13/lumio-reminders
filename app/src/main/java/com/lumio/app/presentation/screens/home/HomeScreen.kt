@@ -1,5 +1,6 @@
 package com.lumio.app.presentation.screens.home
 
+import androidx.compose.animation.*
 import androidx.compose.animation.core.*
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
@@ -25,8 +26,10 @@ import androidx.navigation.NavController
 import com.lumio.app.presentation.components.LumioBottomNavBar
 import com.lumio.app.presentation.components.ReminderCard
 import com.lumio.app.presentation.navigation.Screen
+import com.lumio.app.presentation.theme.*
 import java.util.Calendar
 
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun HomeScreen(
     navController: NavController,
@@ -39,13 +42,15 @@ fun HomeScreen(
         topBar = {
             Column(
                 modifier = Modifier
+                    .fillMaxWidth()
                     .background(MaterialTheme.colorScheme.background)
             ) {
-                // ── Premium Top Bar ────────────────────
+                // ── Top Bar ──────────────────────────
                 Row(
                     modifier = Modifier
                         .fillMaxWidth()
-                        .padding(horizontal = 20.dp, vertical = 12.dp),
+                        .statusBarsPadding()
+                        .padding(horizontal = 20.dp, vertical = 8.dp),
                     verticalAlignment = Alignment.CenterVertically
                 ) {
                     Column(Modifier.weight(1f)) {
@@ -54,40 +59,40 @@ fun HomeScreen(
                             style = MaterialTheme.typography.bodySmall,
                             color = MaterialTheme.colorScheme.onSurfaceVariant
                         )
-                        Row(verticalAlignment = Alignment.CenterVertically) {
+                        Row(
+                            verticalAlignment     = Alignment.CenterVertically,
+                            horizontalArrangement = Arrangement.spacedBy(6.dp)
+                        ) {
                             Text(
                                 text       = "LUMIO",
                                 style      = MaterialTheme.typography.headlineSmall,
-                                fontWeight = FontWeight.ExtraBold,
+                                fontWeight = FontWeight.Black,
                                 color      = MaterialTheme.colorScheme.primary
                             )
-                            Text(
-                                text     = " ✦",
-                                fontSize = 14.sp,
-                                color    = Color(0xFFA855F7)
+                            Box(
+                                modifier = Modifier
+                                    .size(6.dp)
+                                    .clip(RoundedCornerShape(3.dp))
+                                    .background(MaterialTheme.colorScheme.secondary)
                             )
                         }
                     }
-                    // Action icons
-                    IconButton(onClick = { navController.navigate(Screen.Voice.route) }) {
-                        Icon(Icons.Rounded.Mic, "Voice",
-                            tint = MaterialTheme.colorScheme.onBackground)
-                    }
-                    IconButton(onClick = { navController.navigate(Screen.Search.route) }) {
-                        Icon(Icons.Rounded.Search, "Search",
-                            tint = MaterialTheme.colorScheme.onBackground)
-                    }
-                    IconButton(onClick = { viewModel.deleteAllCompleted() }) {
-                        Icon(Icons.Rounded.CleaningServices, "Clear",
-                            tint = MaterialTheme.colorScheme.onBackground)
+                    Row(horizontalArrangement = Arrangement.spacedBy(4.dp)) {
+                        IconButton(onClick = { navController.navigate(Screen.Search.route) }) {
+                            Icon(Icons.Rounded.Search, "Search",
+                                tint = MaterialTheme.colorScheme.onSurfaceVariant)
+                        }
+                        IconButton(onClick = { navController.navigate(Screen.Settings.route) }) {
+                            Icon(Icons.Rounded.Settings, "Settings",
+                                tint = MaterialTheme.colorScheme.onSurfaceVariant)
+                        }
                     }
                 }
 
-                // ── Filter Chips ──────────────────────
+                // ── Filter Chips ─────────────────────
                 LazyRow(
-                    contentPadding        = PaddingValues(horizontal = 16.dp),
-                    horizontalArrangement = Arrangement.spacedBy(8.dp),
-                    modifier              = Modifier.padding(bottom = 10.dp)
+                    contentPadding        = PaddingValues(horizontal = 16.dp, vertical = 4.dp),
+                    horizontalArrangement = Arrangement.spacedBy(8.dp)
                 ) {
                     items(HomeFilter.values()) { filter ->
                         val selected = uiState.activeFilter == filter
@@ -97,22 +102,30 @@ fun HomeScreen(
                             label    = {
                                 Text(
                                     "${filter.emoji} ${filter.label}",
-                                    fontWeight = if (selected) FontWeight.Bold
-                                               else FontWeight.Normal,
+                                    fontWeight = if (selected) FontWeight.Bold else FontWeight.Medium,
                                     fontSize   = 13.sp
                                 )
                             },
-                            colors = FilterChipDefaults.filterChipColors(
+                            colors   = FilterChipDefaults.filterChipColors(
                                 selectedContainerColor = MaterialTheme.colorScheme.primary,
-                                selectedLabelColor     = MaterialTheme.colorScheme.onPrimary,
+                                selectedLabelColor     = Color.White,
                                 containerColor         = MaterialTheme.colorScheme.surfaceVariant
                             ),
-                            shape = RoundedCornerShape(20.dp)
+                            border = if (selected) null else FilterChipDefaults.filterChipBorder(
+                                enabled          = true,
+                                selected         = false,
+                                borderColor      = MaterialTheme.colorScheme.outline.copy(alpha = 0.5f),
+                                selectedBorderColor = Color.Transparent
+                            ),
+                            shape    = RoundedCornerShape(12.dp)
                         )
                     }
                 }
+
+                Spacer(Modifier.height(4.dp))
                 HorizontalDivider(
-                    color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.3f)
+                    color     = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.5f),
+                    thickness = 0.5.dp
                 )
             }
         },
@@ -120,37 +133,39 @@ fun HomeScreen(
         floatingActionButton = {
             Column(
                 horizontalAlignment = Alignment.End,
-                verticalArrangement = Arrangement.spacedBy(12.dp)
+                verticalArrangement = Arrangement.spacedBy(10.dp)
             ) {
+                // AI FAB
                 SmallFloatingActionButton(
                     onClick        = { navController.navigate(Screen.AiChat.route) },
-                    containerColor = Color(0xFF7B2FBE).copy(alpha = 0.15f),
-                    contentColor   = Color(0xFF7B2FBE),
-                    shape          = RoundedCornerShape(16.dp)
-                ) {
-                    Icon(Icons.Rounded.AutoAwesome, "AI")
-                }
-                SmallFloatingActionButton(
-                    onClick        = { navController.navigate(Screen.Location.route) },
-                    containerColor = MaterialTheme.colorScheme.tertiaryContainer,
-                    contentColor   = MaterialTheme.colorScheme.onTertiaryContainer,
-                    shape          = RoundedCornerShape(16.dp)
-                ) {
-                    Icon(Icons.Rounded.LocationOn, "Location")
-                }
-                SmallFloatingActionButton(
-                    onClick        = { navController.navigate(Screen.Voice.route) },
                     containerColor = MaterialTheme.colorScheme.secondaryContainer,
                     contentColor   = MaterialTheme.colorScheme.onSecondaryContainer,
-                    shape          = RoundedCornerShape(16.dp)
+                    shape          = RoundedCornerShape(14.dp),
+                    modifier       = Modifier.size(44.dp)
                 ) {
-                    Icon(Icons.Rounded.Mic, "Voice")
+                    Icon(Icons.Rounded.AutoAwesome, "AI", modifier = Modifier.size(20.dp))
                 }
+                // Voice FAB
+                SmallFloatingActionButton(
+                    onClick        = { navController.navigate(Screen.Voice.route) },
+                    containerColor = MaterialTheme.colorScheme.tertiaryContainer,
+                    contentColor   = MaterialTheme.colorScheme.onTertiaryContainer,
+                    shape          = RoundedCornerShape(14.dp),
+                    modifier       = Modifier.size(44.dp)
+                ) {
+                    Icon(Icons.Rounded.Mic, "Voice", modifier = Modifier.size(20.dp))
+                }
+                // Main Add FAB
                 FloatingActionButton(
                     onClick        = { navController.navigate(Screen.AddReminder.route) },
                     containerColor = MaterialTheme.colorScheme.primary,
-                    contentColor   = MaterialTheme.colorScheme.onPrimary,
-                    shape          = RoundedCornerShape(20.dp)
+                    contentColor   = Color.White,
+                    shape          = RoundedCornerShape(18.dp),
+                    modifier       = Modifier.size(58.dp),
+                    elevation      = FloatingActionButtonDefaults.elevation(
+                        defaultElevation = 4.dp,
+                        pressedElevation = 8.dp
+                    )
                 ) {
                     Icon(Icons.Rounded.Add, "Add", modifier = Modifier.size(28.dp))
                 }
@@ -161,47 +176,48 @@ fun HomeScreen(
         LazyColumn(
             state          = listState,
             modifier       = Modifier.fillMaxSize().padding(padding),
-            contentPadding = PaddingValues(bottom = 140.dp, top = 8.dp)
+            contentPadding = PaddingValues(bottom = 160.dp, top = 12.dp)
         ) {
-            // ── Stats Cards ───────────────────────────
+            // ── Stats Row ─────────────────────────────
             item {
                 Row(
                     modifier = Modifier
                         .fillMaxWidth()
-                        .padding(horizontal = 16.dp, vertical = 8.dp),
+                        .padding(horizontal = 16.dp),
                     horizontalArrangement = Arrangement.spacedBy(10.dp)
                 ) {
-                    GradientStatCard(
-                        title     = "Today",
-                        value     = "${uiState.todayCount}",
-                        icon      = Icons.Rounded.Today,
-                        gradient  = listOf(Color(0xFF1A73E8), Color(0xFF4A90E2)),
-                        modifier  = Modifier.weight(1f)
+                    PremiumStatCard(
+                        label    = "Today",
+                        value    = "${uiState.todayCount}",
+                        icon     = Icons.Rounded.WbSunny,
+                        gradient = GradientBlue,
+                        modifier = Modifier.weight(1f)
                     )
-                    GradientStatCard(
-                        title     = "Active",
-                        value     = "${uiState.totalCount}",
-                        icon      = Icons.AutoMirrored.Rounded.List,
-                        gradient  = listOf(Color(0xFF7B2FBE), Color(0xFFA855F7)),
-                        modifier  = Modifier.weight(1f)
+                    PremiumStatCard(
+                        label    = "Active",
+                        value    = "${uiState.totalCount}",
+                        icon     = Icons.AutoMirrored.Rounded.List,
+                        gradient = GradientPurple,
+                        modifier = Modifier.weight(1f)
                     )
-                    GradientStatCard(
-                        title     = "Done",
-                        value     = "${uiState.completedCount}",
-                        icon      = Icons.Rounded.CheckCircle,
-                        gradient  = listOf(Color(0xFF2E7D32), Color(0xFF4CAF50)),
-                        modifier  = Modifier.weight(1f)
+                    PremiumStatCard(
+                        label    = "Done",
+                        value    = "${uiState.completedCount}",
+                        icon     = Icons.Rounded.TaskAlt,
+                        gradient = GradientGreen,
+                        modifier = Modifier.weight(1f)
                     )
                 }
             }
 
+            item { Spacer(Modifier.height(20.dp)) }
+
             // ── Section Header ────────────────────────
-            val count = uiState.displayedReminders.size
             item {
                 Row(
                     modifier = Modifier
                         .fillMaxWidth()
-                        .padding(horizontal = 16.dp, vertical = 8.dp),
+                        .padding(horizontal = 20.dp),
                     verticalAlignment = Alignment.CenterVertically
                 ) {
                     Column(Modifier.weight(1f)) {
@@ -210,29 +226,19 @@ fun HomeScreen(
                             style      = MaterialTheme.typography.titleMedium,
                             fontWeight = FontWeight.Bold
                         )
-                        if (count > 0) {
-                            Box(
-                                modifier = Modifier
-                                    .padding(top = 2.dp)
-                                    .height(2.dp)
-                                    .width(32.dp)
-                                    .clip(RoundedCornerShape(1.dp))
-                                    .background(MaterialTheme.colorScheme.primary)
+                        if (uiState.displayedReminders.isNotEmpty()) {
+                            Text(
+                                text  = "${uiState.displayedReminders.size} reminders",
+                                style = MaterialTheme.typography.bodySmall,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant
                             )
                         }
                     }
-                    if (count > 0) {
-                        Surface(
-                            shape = RoundedCornerShape(12.dp),
-                            color = MaterialTheme.colorScheme.primaryContainer
-                        ) {
-                            Text(
-                                "$count",
-                                modifier  = Modifier.padding(horizontal = 10.dp, vertical = 4.dp),
-                                color     = MaterialTheme.colorScheme.onPrimaryContainer,
-                                fontWeight= FontWeight.Bold,
-                                fontSize  = 12.sp
-                            )
+                    if (uiState.displayedReminders.isNotEmpty()) {
+                        TextButton(onClick = { viewModel.deleteAllCompleted() }) {
+                            Text("Clear done",
+                                style = MaterialTheme.typography.labelMedium,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant)
                         }
                     }
                 }
@@ -240,18 +246,17 @@ fun HomeScreen(
 
             // ── Empty State ───────────────────────────
             if (uiState.displayedReminders.isEmpty()) {
-                item { PremiumEmptyState(uiState.activeFilter) }
+                item { PremiumEmptyState(filter = uiState.activeFilter) }
             }
 
-            // ── Reminder Cards ────────────────────────
-            items(uiState.displayedReminders, key = { it.id }) { reminder ->
+            // ── Reminders ─────────────────────────────
+            items(
+                uiState.displayedReminders,
+                key = { it.id }
+            ) { reminder ->
                 ReminderCard(
                     reminder   = reminder,
-                    onTap      = {
-                        navController.navigate(
-                            Screen.ReminderDetail.createRoute(reminder.id)
-                        )
-                    },
+                    onTap      = { navController.navigate(Screen.ReminderDetail.createRoute(reminder.id)) },
                     onComplete = { viewModel.toggleComplete(reminder.id, it) },
                     onDelete   = { viewModel.deleteReminder(reminder.id) }
                 )
@@ -261,35 +266,47 @@ fun HomeScreen(
 }
 
 @Composable
-private fun GradientStatCard(
-    title: String,
+private fun PremiumStatCard(
+    label: String,
     value: String,
     icon: ImageVector,
     gradient: List<Color>,
     modifier: Modifier = Modifier
 ) {
     Card(
-        modifier  = modifier,
-        shape     = RoundedCornerShape(18.dp),
+        modifier  = modifier.height(96.dp),
+        shape     = RoundedCornerShape(20.dp),
         elevation = CardDefaults.cardElevation(0.dp)
     ) {
         Box(
             modifier = Modifier
-                .fillMaxWidth()
-                .background(Brush.verticalGradient(gradient))
+                .fillMaxSize()
+                .background(Brush.linearGradient(gradient))
                 .padding(14.dp)
         ) {
-            Column(verticalArrangement = Arrangement.spacedBy(6.dp)) {
-                Icon(icon, null,
-                    tint     = Color.White.copy(alpha = 0.9f),
-                    modifier = Modifier.size(20.dp))
-                Text(value,
-                    style      = MaterialTheme.typography.titleLarge,
-                    fontWeight = FontWeight.ExtraBold,
-                    color      = Color.White)
-                Text(title,
-                    style  = MaterialTheme.typography.labelSmall,
-                    color  = Color.White.copy(alpha = 0.8f))
+            Column(
+                modifier              = Modifier.fillMaxSize(),
+                verticalArrangement   = Arrangement.SpaceBetween
+            ) {
+                Icon(
+                    imageVector        = icon,
+                    contentDescription = null,
+                    tint               = Color.White.copy(alpha = 0.85f),
+                    modifier           = Modifier.size(18.dp)
+                )
+                Column {
+                    Text(
+                        text       = value,
+                        style      = MaterialTheme.typography.headlineMedium,
+                        fontWeight = FontWeight.Black,
+                        color      = Color.White
+                    )
+                    Text(
+                        text  = label,
+                        style = MaterialTheme.typography.labelSmall,
+                        color = Color.White.copy(alpha = 0.75f)
+                    )
+                }
             }
         }
     }
@@ -298,89 +315,73 @@ private fun GradientStatCard(
 @Composable
 private fun PremiumEmptyState(filter: HomeFilter) {
     Column(
-        modifier = Modifier
-            .fillMaxWidth()
-            .padding(24.dp),
+        modifier            = Modifier.fillMaxWidth().padding(32.dp),
         horizontalAlignment = Alignment.CenterHorizontally,
         verticalArrangement = Arrangement.spacedBy(16.dp)
     ) {
-        // Premium illustrated empty state card
-        Card(
-            modifier = Modifier.fillMaxWidth(),
-            shape    = RoundedCornerShape(24.dp),
-            colors   = CardDefaults.cardColors(
-                containerColor = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f)
-            ),
-            elevation = CardDefaults.cardElevation(0.dp)
+        Box(
+            modifier = Modifier
+                .size(120.dp)
+                .clip(RoundedCornerShape(32.dp))
+                .background(MaterialTheme.colorScheme.primaryContainer),
+            contentAlignment = Alignment.Center
         ) {
-            Column(
-                modifier = Modifier.padding(32.dp),
-                horizontalAlignment = Alignment.CenterHorizontally,
-                verticalArrangement = Arrangement.spacedBy(14.dp)
-            ) {
-                Text(
-                    text = when (filter) {
-                        HomeFilter.TODAY     -> "🎉"
-                        HomeFilter.COMPLETED -> "📝"
-                        HomeFilter.PRIORITY  -> "✅"
-                        HomeFilter.UPCOMING  -> "⏰"
-                        HomeFilter.ALL       -> "📋"
-                    },
-                    fontSize = 64.sp
-                )
-                Text(
-                    text = when (filter) {
-                        HomeFilter.TODAY     -> "Nothing due today!"
-                        HomeFilter.COMPLETED -> "No completed reminders"
-                        HomeFilter.PRIORITY  -> "No priority reminders"
-                        HomeFilter.UPCOMING  -> "Nothing upcoming"
-                        HomeFilter.ALL       -> "No reminders yet"
-                    },
-                    style      = MaterialTheme.typography.titleMedium,
-                    fontWeight = FontWeight.Bold
-                )
-                Text(
-                    text = when (filter) {
-                        HomeFilter.TODAY -> "Enjoy your free day 😊"
-                        HomeFilter.COMPLETED -> "Complete some reminders"
-                        else -> "Tap + to add a reminder"
-                    },
-                    style = MaterialTheme.typography.bodyMedium,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant
-                )
+            Text(
+                text     = when (filter) {
+                    HomeFilter.TODAY     -> "🎉"
+                    HomeFilter.COMPLETED -> "✅"
+                    HomeFilter.PRIORITY  -> "⚡"
+                    HomeFilter.UPCOMING  -> "⏰"
+                    HomeFilter.ALL       -> "📋"
+                },
+                fontSize = 52.sp
+            )
+        }
 
-                // Voice add hint
-                Surface(
-                    shape = RoundedCornerShape(12.dp),
-                    color = MaterialTheme.colorScheme.primary.copy(alpha = 0.1f)
-                ) {
-                    Row(
-                        modifier = Modifier.padding(horizontal = 16.dp, vertical = 10.dp),
-                        verticalAlignment = Alignment.CenterVertically,
-                        horizontalArrangement = Arrangement.spacedBy(8.dp)
-                    ) {
-                        Icon(Icons.Rounded.Mic, null,
-                            tint     = MaterialTheme.colorScheme.primary,
-                            modifier = Modifier.size(16.dp))
-                        Icon(Icons.Rounded.GraphicEq, null,
-                            tint     = MaterialTheme.colorScheme.primary,
-                            modifier = Modifier.size(14.dp))
-                        Text(
-                            "Or tap 🎙️ to add by voice",
-                            style  = MaterialTheme.typography.bodySmall,
-                            color  = MaterialTheme.colorScheme.primary,
-                            fontWeight = FontWeight.Medium
-                        )
-                    }
-                }
+        Text(
+            text       = when (filter) {
+                HomeFilter.TODAY    -> "All clear today!"
+                HomeFilter.COMPLETED-> "Nothing completed yet"
+                HomeFilter.PRIORITY -> "No priority items"
+                HomeFilter.UPCOMING -> "Nothing upcoming"
+                HomeFilter.ALL      -> "Your reminder list is empty"
+            },
+            style      = MaterialTheme.typography.titleMedium,
+            fontWeight = FontWeight.Bold,
+            color      = MaterialTheme.colorScheme.onBackground
+        )
+        Text(
+            text  = when (filter) {
+                HomeFilter.TODAY -> "Enjoy your free day \uD83D\uDE0A"
+                else             -> "Tap + to create your first reminder"
+            },
+            style = MaterialTheme.typography.bodyMedium,
+            color = MaterialTheme.colorScheme.onSurfaceVariant
+        )
+
+        Surface(
+            shape = RoundedCornerShape(14.dp),
+            color = MaterialTheme.colorScheme.surfaceVariant
+        ) {
+            Row(
+                modifier              = Modifier.padding(horizontal = 16.dp, vertical = 10.dp),
+                verticalAlignment     = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.spacedBy(8.dp)
+            ) {
+                Icon(Icons.Rounded.Mic, null,
+                    tint     = MaterialTheme.colorScheme.primary,
+                    modifier = Modifier.size(16.dp))
+                Text("Try voice: "Remind me tomorrow at 5 PM"",
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant)
             }
         }
     }
 }
 
 private fun greeting(): String = when (Calendar.getInstance().get(Calendar.HOUR_OF_DAY)) {
-    in 0..11  -> "Good morning ☀️"
-    in 12..16 -> "Good afternoon 🌤"
-    in 17..20 -> "Good evening 🌙"
-    else      -> "Good night 🌟"
+    in 5..11  -> "Good morning \u2600\uFE0F"
+    in 12..16 -> "Good afternoon \uD83C\uDF24\uFE0F"
+    in 17..20 -> "Good evening \uD83C\uDF19"
+    else      -> "Good night \uD83C\uDF1F"
 }
