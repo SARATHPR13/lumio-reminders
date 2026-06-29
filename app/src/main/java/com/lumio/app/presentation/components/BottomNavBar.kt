@@ -31,11 +31,11 @@ private data class NavItem(
 @Composable
 fun LumioBottomNavBar(navController: NavController) {
     val items = listOf(
-        NavItem(Screen.Home,     "Home",     Icons.Rounded.Home,         Icons.Rounded.Home),
-        NavItem(Screen.Calendar, "Calendar", Icons.Rounded.CalendarMonth, Icons.Rounded.CalendarMonth),
+        NavItem(Screen.Home,     "Home",     Icons.Rounded.Home,          Icons.Rounded.Home),
+        NavItem(Screen.Calendar, "Calendar", Icons.Rounded.CalendarMonth,  Icons.Rounded.CalendarMonth),
         NavItem(Screen.Health,   "Health",   Icons.Rounded.FavoriteBorder, Icons.Rounded.Favorite),
-        NavItem(Screen.Stats,    "Stats",    Icons.Rounded.BarChart,      Icons.Rounded.BarChart),
-        NavItem(Screen.AiChat,   "AI",       Icons.Rounded.AutoAwesome,   Icons.Rounded.AutoAwesome),
+        NavItem(Screen.AiChat,   "AI",       Icons.Rounded.AutoAwesome,    Icons.Rounded.AutoAwesome),
+        NavItem(Screen.Settings, "Settings", Icons.Rounded.Settings,       Icons.Rounded.Settings),
     )
 
     val navBackStackEntry by navController.currentBackStackEntryAsState()

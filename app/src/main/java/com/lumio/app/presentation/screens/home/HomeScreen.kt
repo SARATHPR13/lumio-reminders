@@ -105,7 +105,8 @@ fun HomeScreen(
                             colors = FilterChipDefaults.filterChipColors(
                                 selectedContainerColor = MaterialTheme.colorScheme.primary,
                                 selectedLabelColor     = Color.White,
-                                containerColor         = MaterialTheme.colorScheme.surfaceVariant
+                                containerColor         = MaterialTheme.colorScheme.surface,
+                                labelColor             = MaterialTheme.colorScheme.onSurface
                             ),
                             shape  = RoundedCornerShape(12.dp)
                         )
@@ -145,20 +146,14 @@ fun HomeScreen(
                     Icon(Icons.Rounded.Mic, "Voice",
                         modifier = Modifier.size(20.dp))
                 }
-                FloatingActionButton(
+                ExtendedFloatingActionButton(
                     onClick        = { navController.navigate(Screen.AddReminder.route) },
                     containerColor = MaterialTheme.colorScheme.primary,
                     contentColor   = Color.White,
                     shape          = RoundedCornerShape(18.dp),
-                    modifier       = Modifier.size(58.dp),
-                    elevation      = FloatingActionButtonDefaults.elevation(
-                        defaultElevation = 4.dp,
-                        pressedElevation = 8.dp
-                    )
-                ) {
-                    Icon(Icons.Rounded.Add, "Add",
-                        modifier = Modifier.size(28.dp))
-                }
+                    icon = { Icon(Icons.Rounded.Add, "Add") },
+                    text = { Text("Add Reminder", fontWeight = FontWeight.Bold) }
+                )
             }
         },
         containerColor = MaterialTheme.colorScheme.background
