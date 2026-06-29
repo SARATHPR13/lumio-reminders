@@ -168,6 +168,7 @@ enum class FontSize(val label: String, val scale: Float) {
     MEDIUM("Medium", 1.00f),
     LARGE ("Large",  1.15f),
     XLARGE("X-Large",1.30f)
+}
 
     suspend fun setDynamicColors(enabled: Boolean) {
         dataStore.edit { it[KEY_DYNAMIC_COLOR] = enabled }
