@@ -1,17 +1,17 @@
 package com.lumio.app.presentation.navigation
 
 sealed class Screen(val route: String) {
-    object Onboarding   : Screen("onboarding")
-    object Home         : Screen("home")
-    object Calendar     : Screen("calendar")
-    object Categories   : Screen("categories")
-    object Settings     : Screen("settings")
-    object AddReminder  : Screen("add_reminder")
-    object Search       : Screen("search")
-    object Voice        : Screen("voice")
-    object Health       : Screen("health")
-    object Stats        : Screen("stats")
-    object Weather      : Screen("weather")
+    object Onboarding      : Screen("onboarding")
+    object Home            : Screen("home")
+    object Calendar        : Screen("calendar")
+    object Categories      : Screen("categories")
+    object Settings        : Screen("settings")
+    object AddReminder     : Screen("add_reminder")
+    object Search          : Screen("search")
+    object Voice           : Screen("voice")
+    object Health          : Screen("health")
+    object Stats           : Screen("stats")
+    object Location        : Screen("location")
 
     object EditReminder : Screen("edit_reminder/{reminderId}") {
         fun createRoute(id: Long) = "edit_reminder/$id"
