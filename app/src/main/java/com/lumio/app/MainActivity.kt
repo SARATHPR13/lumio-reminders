@@ -30,9 +30,14 @@ class MainActivity : ComponentActivity() {
 
         setContent {
             val themeMode    by appPreferences.themeMode.collectAsState(initial = "system")
-            val dynamicColor by appPreferences.dynamicColors.collectAsState(initial = true)
+            val dynamicColor by appPreferences.dynamicColor.collectAsState(initial = true)
 
             LumioTheme(
+                darkTheme    = when (themeMode) {
+                    "dark", "amoled" -> true
+                    "light"          -> false
+                    else             -> isSystemInDarkTheme()
+                },
                 dynamicColor = dynamicColor
             ) {
                 Surface(
