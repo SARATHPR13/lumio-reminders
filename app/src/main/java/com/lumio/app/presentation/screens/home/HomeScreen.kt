@@ -380,8 +380,8 @@ private fun PremiumEmptyState(filter: HomeFilter) {
 }
 
 private fun greeting(): String = when (Calendar.getInstance().get(Calendar.HOUR_OF_DAY)) {
-    in 5..11  -> "Good morning \u2600\uFE0F"
-    in 12..16 -> "Good afternoon \uD83C\uDF24\uFE0F"
-    in 17..20 -> "Good evening \uD83C\uDF19"
-    else      -> "Good night \uD83C\uDF1F"
+    in 5..11  -> "Good morning"
+    in 12..16 -> "Good afternoon"
+    in 17..20 -> "Good evening"
+    else      -> "Good night"
 }
