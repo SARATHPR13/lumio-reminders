@@ -47,7 +47,7 @@ class AppPreferences @Inject constructor(
         }
 
     suspend fun setThemeMode(mode: String) {
-        dataStore.edit { it[KEY_THEME_MODE] = mode.name }
+        dataStore.edit { it[KEY_THEME_MODE] = mode }
     }
 
     val dynamicColor: Flow<Boolean> = dataStore.data
@@ -62,11 +62,11 @@ class AppPreferences @Inject constructor(
     val fontSize: Flow<FontSize> = dataStore.data
         .catch { emit(emptyPreferences()) }
         .map { prefs ->
-            FontSize.valueOf(prefs[KEY_FONT_SIZE] ?: FontSize.MEDIUM.name)
+            prefs[KEY_FONT_SIZE] ?: "medium"
         }
 
     suspend fun setFontSize(size: FontSize) {
-        dataStore.edit { it[KEY_FONT_SIZE] = size.name }
+        dataStore.edit { it[KEY_FONT_SIZE] = size }
     }
 
     // ── Notifications ────────────────────────────────

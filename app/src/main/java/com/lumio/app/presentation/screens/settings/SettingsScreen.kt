@@ -83,8 +83,7 @@ fun SettingsScreen(
                     SettingsItem(
                         icon  = Icons.Rounded.DarkMode,
                         title = "Theme Mode",
-                        subtitle = uiState.themeMode.name.lowercase()
-                            .replaceFirstChar { it.uppercase() }
+                        subtitle = uiState.themeMode.replaceFirstChar { it.uppercase() }
                     )
                     // Theme chips
                     Row(
@@ -93,19 +92,21 @@ fun SettingsScreen(
                             .padding(horizontal = 16.dp, vertical = 8.dp),
                         horizontalArrangement = Arrangement.spacedBy(8.dp)
                     ) {
-                        ThemeMode.values().forEach { mode ->
-                            val sel = uiState.themeMode == mode
+                        listOf(
+                            "light"  to "☀️ Light",
+                            "dark"   to "🌙 Dark",
+                            "amoled" to "⚫ AMOLED",
+                            "system" to "📱 System"
+                        ).forEach { (modeKey, modeLabel) ->
+                            val sel = uiState.themeMode == modeKey
                             FilterChip(
                                 selected = sel,
-                                onClick  = { viewModel.setThemeMode(mode) },
+                                onClick  = { viewModel.setThemeMode(modeKey) },
                                 label    = {
-                                    Text(
-                                        when (mode) {
-                                            "light"  -> "☀️ Light"
-                                            "dark"   -> "🌙 Dark"
-                                            "amoled" -> "⚫ AMOLED"
-                                            "system" -> "📱 System"
-                                        },
+                                    Text(modeLabel, fontSize = 11.sp)
+                                }
+                            )
+                        },
                                         fontSize = 11.sp
                                     )
                                 },
