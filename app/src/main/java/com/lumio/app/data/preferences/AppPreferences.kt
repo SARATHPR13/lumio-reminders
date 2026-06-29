@@ -38,7 +38,7 @@ class AppPreferences @Inject constructor(
     }
 
     // ── Theme ─────────────────────────────────────────
-    val themeMode: Flow<ThemeMode> = dataStore.data
+    val themeMode: Flow<String> = dataStore.data
         .catch { emit(emptyPreferences()) }
         .map { prefs ->
             
@@ -46,7 +46,7 @@ class AppPreferences @Inject constructor(
             
         }
 
-    suspend fun setThemeMode(mode: ThemeMode) {
+    suspend fun setThemeMode(mode: String) {
         dataStore.edit { it[KEY_THEME_MODE] = mode.name }
     }
 

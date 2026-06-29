@@ -16,7 +16,7 @@ import java.util.*
 import javax.inject.Inject
 
 data class SettingsUiState(
-    val themeMode: ThemeMode        = "system",
+    val themeMode: String        = "system",
     val dynamicColor: Boolean       = true,
     val fontSize: FontSize          = FontSize.MEDIUM,
     val defaultSound: Boolean       = true,
@@ -103,7 +103,7 @@ class SettingsViewModel @Inject constructor(
     }
 
     // ── Theme ─────────────────────────────────────────
-    fun setThemeMode(mode: ThemeMode) {
+    fun setThemeMode(mode: String) {
         viewModelScope.launch { prefs.setThemeMode(mode) }
     }
 
