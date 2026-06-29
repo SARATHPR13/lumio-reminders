@@ -153,8 +153,8 @@ fun HomeScreen(
                     shape          = RoundedCornerShape(16.dp)
                 ) {
                     Icon(Icons.Rounded.Add, "Add", modifier = Modifier.size(26.dp))
-                } }
-                )
+                }
+            }
             }
         },
         containerColor = MaterialTheme.colorScheme.background
