@@ -19,7 +19,6 @@ import com.lumio.app.presentation.screens.categories.CategoriesScreen
 import com.lumio.app.presentation.screens.detail.ReminderDetailScreen
 import com.lumio.app.presentation.screens.health.HealthScreen
 import com.lumio.app.presentation.screens.home.HomeScreen
-import com.lumio.app.presentation.screens.location.LocationScreen
 import com.lumio.app.presentation.screens.location.LocationPickerScreen
 import com.lumio.app.presentation.screens.onboarding.OnboardingScreen
 import com.lumio.app.presentation.screens.search.SearchScreen
@@ -39,55 +38,131 @@ class NavViewModel @Inject constructor(
 ) : ViewModel() {
     private val _firstLaunch = MutableStateFlow(true)
     val firstLaunch: StateFlow<Boolean> = _firstLaunch.asStateFlow()
-    init { viewModelScope.launch { prefs.firstLaunch.collect { _firstLaunch.value = it } } }
-    fun completeOnboarding() { viewModelScope.launch { prefs.setFirstLaunch(false) } }
+
+    init {
+        viewModelScope.launch {
+            prefs.firstLaunch.collect { _firstLaunch.value = it }
+        }
+    }
+
+    fun completeOnboarding() {
+        viewModelScope.launch { prefs.setFirstLaunch(false) }
+    }
 }
 
 @Composable
-fun LumioNavGraph(navController: NavHostController = rememberNavController()) {
+fun LumioNavGraph(
+    navController: NavHostController = rememberNavController()
+) {
     val navViewModel: NavViewModel = hiltViewModel()
     val isFirstLaunch by navViewModel.firstLaunch.collectAsState()
-    val start = if (isFirstLaunch) Screen.Onboarding.route else Screen.Home.route
+    val startDestination = if (isFirstLaunch) Screen.Onboarding.route
+                          else Screen.Home.route
 
-    NavHost(navController = navController, startDestination = start) {
+    NavHost(
+        navController    = navController,
+        startDestination = startDestination
+    ) {
+
+        // ── Onboarding ────────────────────────────────
         composable(Screen.Onboarding.route) {
-            OnboardingScreen(onFinish = {
-                navViewModel.completeOnboarding()
-                navController.navigate(Screen.Home.route) {
-                    popUpTo(Screen.Onboarding.route) { inclusive = true }
+            OnboardingScreen(
+                onFinish = {
+                    navViewModel.completeOnboarding()
+                    navController.navigate(Screen.Home.route) {
+                        popUpTo(Screen.Onboarding.route) { inclusive = true }
+                    }
                 }
-            })
+            )
         }
-        composable(Screen.Home.route)       { HomeScreen(navController) }
-        composable(Screen.AddReminder.route){ AddReminderScreen(navController) }
-        composable(Screen.Calendar.route)   { CalendarScreen(navController) }
-        composable(Screen.Categories.route) { CategoriesScreen(navController) }
-        composable(Screen.Settings.route)   { SettingsScreen(navController) }
-        composable(Screen.Search.route)     { SearchScreen(navController) }
-        composable(Screen.Voice.route)      { VoiceScreen(navController) }
-        composable(Screen.Health.route)     { HealthScreen(navController) }
-        composable(Screen.Stats.route)      { StatsScreen(navController) }
-        composable(Screen.Location.route)   { LocationPickerScreen(navController) }
 
+        // ── Home ──────────────────────────────────────
+        composable(Screen.Home.route) {
+            HomeScreen(navController = navController)
+        }
+
+        // ── Add Reminder ──────────────────────────────
+        composable(Screen.AddReminder.route) {
+            AddReminderScreen(navController = navController)
+        }
+
+        // ── Calendar ──────────────────────────────────
+        composable(Screen.Calendar.route) {
+            CalendarScreen(navController = navController)
+        }
+
+        // ── Categories ────────────────────────────────
+        composable(Screen.Categories.route) {
+            CategoriesScreen(navController = navController)
+        }
+
+        // ── Settings ──────────────────────────────────
+        composable(Screen.Settings.route) {
+            SettingsScreen(navController = navController)
+        }
+
+        // ── Search ────────────────────────────────────
+        composable(Screen.Search.route) {
+            SearchScreen(navController = navController)
+        }
+
+        // ── Voice ─────────────────────────────────────
+        composable(Screen.Voice.route) {
+            VoiceScreen(navController = navController)
+        }
+
+        // ── Health ────────────────────────────────────
+        composable(Screen.Health.route) {
+            HealthScreen(navController = navController)
+        }
+
+        // ── Stats ─────────────────────────────────────
+        composable(Screen.Stats.route) {
+            StatsScreen(navController = navController)
+        }
+
+        // ── Location (Both GPS + Map) ─────────────────
+        composable(Screen.Location.route) {
+            LocationPickerScreen(navController = navController)
+        }
+
+        // ── Reminder Detail ───────────────────────────
         composable(
             route = Screen.ReminderDetail.route,
-            arguments = listOf(navArgument("reminderId") {
-                type = NavType.LongType; defaultValue = -1L
-            })
-        ) { ReminderDetailScreen(navController) }
+            arguments = listOf(
+                navArgument("reminderId") {
+                    type         = NavType.LongType
+                    defaultValue = -1L
+                }
+            )
+        ) {
+            ReminderDetailScreen(navController = navController)
+        }
 
+        // ── Edit Reminder ─────────────────────────────
         composable(
             route = Screen.EditReminder.route,
-            arguments = listOf(navArgument("reminderId") {
-                type = NavType.LongType; defaultValue = -1L
-            })
-        ) { AddReminderScreen(navController) }
+            arguments = listOf(
+                navArgument("reminderId") {
+                    type         = NavType.LongType
+                    defaultValue = -1L
+                }
+            )
+        ) {
+            AddReminderScreen(navController = navController)
+        }
 
+        // ── Category Detail ───────────────────────────
         composable(
             route = Screen.CategoryDetail.route,
-            arguments = listOf(navArgument("categoryId") {
-                type = NavType.LongType; defaultValue = -1L
-            })
-        ) { HomeScreen(navController) }
+            arguments = listOf(
+                navArgument("categoryId") {
+                    type         = NavType.LongType
+                    defaultValue = -1L
+                }
+            )
+        ) {
+            HomeScreen(navController = navController)
+        }
     }
 }
