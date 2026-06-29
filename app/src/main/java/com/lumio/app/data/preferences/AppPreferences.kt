@@ -62,7 +62,7 @@ class AppPreferences @Inject constructor(
     val fontSize: Flow<FontSize> = dataStore.data
         .catch { emit(emptyPreferences()) }
         .map { prefs ->
-            prefs[KEY_FONT_SIZE] ?: "medium"
+            FontSize.valueOf(prefs[KEY_FONT_SIZE] ?: FontSize.MEDIUM.name)
         }
 
     suspend fun setFontSize(size: FontSize) {
