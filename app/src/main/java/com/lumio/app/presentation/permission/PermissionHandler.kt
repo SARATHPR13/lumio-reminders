@@ -5,14 +5,13 @@ import android.os.Build
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.rounded.Notifications
-import androidx.compose.material.icons.rounded.NotificationsActive
+import androidx.compose.material.icons.rounded.*
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.google.accompanist.permissions.ExperimentalPermissionsApi
@@ -22,119 +21,172 @@ import com.google.accompanist.permissions.shouldShowRationale
 
 @OptIn(ExperimentalPermissionsApi::class)
 @Composable
-fun LumioPermissions(content: @Composable () -> Unit) {
-    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
-        val notifPermission = rememberPermissionState(
-            Manifest.permission.POST_NOTIFICATIONS
-        )
-        var requested by remember { mutableStateOf(false) }
+fun MicrophonePermissionHandler(
+    onGranted: @Composable () -> Unit,
+    onDenied: @Composable () -> Unit = {}
+) {
+    val micPermState = rememberPermissionState(Manifest.permission.RECORD_AUDIO)
+    var showRationale by remember { mutableStateOf(false) }
 
-        LaunchedEffect(Unit) {
-            if (!notifPermission.status.isGranted && !requested) {
-                notifPermission.launchPermissionRequest()
-                requested = true
+    when {
+        micPermState.status.isGranted -> {
+            onGranted()
+        }
+        micPermState.status.shouldShowRationale || !micPermState.status.isGranted -> {
+            if (showRationale) {
+                MicrophoneRationaleDialog(
+                    onAllow   = {
+                        showRationale = false
+                        micPermState.launchPermissionRequest()
+                    },
+                    onDismiss = { showRationale = false }
+                )
             }
+            LaunchedEffect(Unit) { showRationale = true }
+            onDenied()
         }
-
-        if (!notifPermission.status.isGranted && notifPermission.status.shouldShowRationale) {
-            PermissionRationaleScreen(
-                onRequest = { notifPermission.launchPermissionRequest() }
-            )
-        } else {
-            content()
-        }
-    } else {
-        content()
     }
 }
 
 @Composable
-private fun PermissionRationaleScreen(onRequest: () -> Unit) {
-    Box(
-        modifier = Modifier.fillMaxSize(),
-        contentAlignment = Alignment.Center
-    ) {
-        Card(
-            modifier  = Modifier.padding(24.dp),
-            shape     = RoundedCornerShape(24.dp),
-            elevation = CardDefaults.cardElevation(8.dp)
-        ) {
-            Column(
-                modifier = Modifier.padding(32.dp),
-                horizontalAlignment = Alignment.CenterHorizontally,
-                verticalArrangement = Arrangement.spacedBy(20.dp)
-            ) {
-                Surface(
-                    shape  = RoundedCornerShape(20.dp),
-                    color  = MaterialTheme.colorScheme.primaryContainer,
-                    modifier = Modifier.size(80.dp)
-                ) {
-                    Box(Modifier.fillMaxSize(), Alignment.Center) {
-                        Icon(
-                            Icons.Rounded.NotificationsActive,
-                            contentDescription = null,
-                            modifier = Modifier.size(40.dp),
-                            tint = MaterialTheme.colorScheme.onPrimaryContainer
-                        )
-                    }
-                }
-
+fun MicrophoneRationaleDialog(
+    onAllow: () -> Unit,
+    onDismiss: () -> Unit
+) {
+    AlertDialog(
+        onDismissRequest = onDismiss,
+        icon = {
+            Icon(
+                Icons.Rounded.Mic,
+                contentDescription = null,
+                tint     = MaterialTheme.colorScheme.primary,
+                modifier = Modifier.size(40.dp)
+            )
+        },
+        title = {
+            Text(
+                "Microphone Permission",
+                fontWeight = FontWeight.Bold
+            )
+        },
+        text = {
+            Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
                 Text(
-                    text       = "Enable Notifications",
-                    style      = MaterialTheme.typography.titleLarge,
-                    fontWeight = FontWeight.Bold
+                    "LUMIO needs microphone access to let you create reminders using your voice.",
+                    style = MaterialTheme.typography.bodyMedium
                 )
-
-                Text(
-                    text      = "LUMIO needs notification permission to alert you about your reminders at exactly the right time.",
-                    style     = MaterialTheme.typography.bodyMedium,
-                    textAlign = TextAlign.Center,
-                    color     = MaterialTheme.colorScheme.onSurfaceVariant
-                )
-
                 Card(
-                    colors    = CardDefaults.cardColors(
-                        containerColor = MaterialTheme.colorScheme.secondaryContainer
-                    ),
-                    shape = RoundedCornerShape(12.dp)
+                    shape  = RoundedCornerShape(12.dp),
+                    colors = CardDefaults.cardColors(
+                        containerColor = MaterialTheme.colorScheme.primaryContainer
+                    )
                 ) {
                     Column(
-                        modifier = Modifier.padding(16.dp),
-                        verticalArrangement = Arrangement.spacedBy(8.dp)
+                        modifier            = Modifier.padding(12.dp),
+                        verticalArrangement = Arrangement.spacedBy(6.dp)
                     ) {
-                        PermissionBenefit("🔔", "Get alerted at exactly the right time")
-                        PermissionBenefit("⏰", "Never miss an important reminder")
-                        PermissionBenefit("💊", "Daily reminders for health & medicine")
-                        PermissionBenefit("🎂", "Birthday and event alerts")
+                        PermissionFeatureRow("Voice reminders — just speak!")
+                        PermissionFeatureRow("Hands-free reminder creation")
+                        PermissionFeatureRow("Works offline — no cloud needed")
                     }
                 }
-
-                Button(
-                    onClick  = onRequest,
-                    modifier = Modifier.fillMaxWidth().height(52.dp),
-                    shape    = RoundedCornerShape(12.dp)
-                ) {
-                    Icon(Icons.Rounded.Notifications, null, modifier = Modifier.size(20.dp))
-                    Spacer(Modifier.width(8.dp))
-                    Text("Allow Notifications", fontWeight = FontWeight.Bold, fontSize = 16.sp)
-                }
+                Text(
+                    "Your voice is never recorded or stored. It is only used while you are speaking.",
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                )
             }
-        }
-    }
+        },
+        confirmButton = {
+            Button(
+                onClick = onAllow,
+                shape   = RoundedCornerShape(10.dp)
+            ) {
+                Icon(Icons.Rounded.Mic, null, modifier = Modifier.size(18.dp))
+                Spacer(Modifier.width(6.dp))
+                Text("Allow Microphone", fontWeight = FontWeight.Bold)
+            }
+        },
+        dismissButton = {
+            OutlinedButton(
+                onClick = onDismiss,
+                shape   = RoundedCornerShape(10.dp)
+            ) { Text("Not Now") }
+        },
+        shape = RoundedCornerShape(20.dp)
+    )
 }
 
 @Composable
-private fun PermissionBenefit(emoji: String, text: String) {
+private fun PermissionFeatureRow(text: String) {
     Row(
-        horizontalArrangement = Arrangement.spacedBy(10.dp),
-        verticalAlignment     = Alignment.CenterVertically
+        verticalAlignment     = Alignment.CenterVertically,
+        horizontalArrangement = Arrangement.spacedBy(8.dp)
     ) {
-        Text(emoji, fontSize = 18.sp)
-        Text(
-            text  = text,
-            style = MaterialTheme.typography.bodySmall,
-            color = MaterialTheme.colorScheme.onSecondaryContainer,
-            modifier = Modifier.weight(1f)
+        Icon(
+            Icons.Rounded.CheckCircle, null,
+            tint     = MaterialTheme.colorScheme.primary,
+            modifier = Modifier.size(16.dp)
         )
+        Text(text, style = MaterialTheme.typography.bodySmall)
     }
+}
+
+@OptIn(ExperimentalPermissionsApi::class)
+@Composable
+fun NotificationPermissionHandler(content: @Composable () -> Unit) {
+    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+        val notifPerm = rememberPermissionState(Manifest.permission.POST_NOTIFICATIONS)
+        var showDialog by remember { mutableStateOf(false) }
+
+        LaunchedEffect(Unit) {
+            if (!notifPerm.status.isGranted) showDialog = true
+        }
+
+        if (showDialog) {
+            AlertDialog(
+                onDismissRequest = { showDialog = false },
+                icon = {
+                    Icon(Icons.Rounded.NotificationsActive, null,
+                        tint     = MaterialTheme.colorScheme.primary,
+                        modifier = Modifier.size(40.dp))
+                },
+                title = { Text("Enable Notifications", fontWeight = FontWeight.Bold) },
+                text  = {
+                    Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
+                        Text("LUMIO needs notification permission to send you reminders at the right time.")
+                        Card(
+                            shape  = RoundedCornerShape(12.dp),
+                            colors = CardDefaults.cardColors(
+                                containerColor = MaterialTheme.colorScheme.primaryContainer
+                            )
+                        ) {
+                            Column(
+                                modifier            = Modifier.padding(12.dp),
+                                verticalArrangement = Arrangement.spacedBy(6.dp)
+                            ) {
+                                PermissionFeatureRow("Get reminded at scheduled times")
+                                PermissionFeatureRow("Snooze or mark done from notification")
+                                PermissionFeatureRow("Location-based alerts")
+                            }
+                        }
+                    }
+                },
+                confirmButton = {
+                    Button(
+                        onClick = {
+                            showDialog = false
+                            notifPerm.launchPermissionRequest()
+                        },
+                        shape = RoundedCornerShape(10.dp)
+                    ) { Text("Enable Notifications", fontWeight = FontWeight.Bold) }
+                },
+                dismissButton = {
+                    TextButton(onClick = { showDialog = false }) { Text("Later") }
+                },
+                shape = RoundedCornerShape(20.dp)
+            )
+        }
+    }
+    content()
 }

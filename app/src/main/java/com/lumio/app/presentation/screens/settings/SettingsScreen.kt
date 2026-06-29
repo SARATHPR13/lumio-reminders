@@ -1,4 +1,5 @@
 package com.lumio.app.presentation.screens.settings
+// LanguageManager imported via ViewModel
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
