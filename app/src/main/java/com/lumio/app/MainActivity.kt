@@ -4,7 +4,6 @@ import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
-import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
@@ -29,15 +28,9 @@ class MainActivity : ComponentActivity() {
         enableEdgeToEdge()
 
         setContent {
-            val themeMode    by appPreferences.themeMode.collectAsState(initial = "system")
-            val dynamicColor by appPreferences.dynamicColor.collectAsState(initial = true)
+            val dynamicColor by appPreferences.KEY_DYNAMIC_COLOR.collectAsState(initial = true)
 
             LumioTheme(
-                darkTheme    = when (themeMode) {
-                    "dark", "amoled" -> true
-                    "light"          -> false
-                    else             -> isSystemInDarkTheme()
-                },
                 dynamicColor = dynamicColor
             ) {
                 Surface(
