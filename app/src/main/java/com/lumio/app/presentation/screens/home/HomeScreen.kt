@@ -1,6 +1,5 @@
 package com.lumio.app.presentation.screens.home
 
-import androidx.compose.animation.core.*
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.*
@@ -27,7 +26,6 @@ import com.lumio.app.presentation.components.ReminderCard
 import com.lumio.app.presentation.navigation.Screen
 import java.util.Calendar
 
-@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun HomeScreen(
     navController: NavController,
@@ -50,7 +48,7 @@ fun HomeScreen(
                         .padding(horizontal = 20.dp, vertical = 8.dp),
                     verticalAlignment = Alignment.CenterVertically
                 ) {
-                    Column(Modifier.weight(1f)) {
+                    Column(modifier = Modifier.weight(1f)) {
                         Text(
                             text  = getGreeting(),
                             style = MaterialTheme.typography.bodySmall,
@@ -74,18 +72,21 @@ fun HomeScreen(
                             )
                         }
                     }
-                    Row(horizontalArrangement = Arrangement.spacedBy(4.dp)) {
-                        IconButton(onClick = { navController.navigate(Screen.Search.route) }) {
-                            Icon(Icons.Rounded.Search, "Search",
-                                tint = MaterialTheme.colorScheme.onSurfaceVariant)
-                        }
-                        IconButton(onClick = { navController.navigate(Screen.Settings.route) }) {
-                            Icon(Icons.Rounded.Settings, "Settings",
-                                tint = MaterialTheme.colorScheme.onSurfaceVariant)
-                        }
+                    IconButton(onClick = { navController.navigate(Screen.Search.route) }) {
+                        Icon(
+                            Icons.Rounded.Search,
+                            contentDescription = "Search",
+                            tint = MaterialTheme.colorScheme.onSurfaceVariant
+                        )
+                    }
+                    IconButton(onClick = { navController.navigate(Screen.Settings.route) }) {
+                        Icon(
+                            Icons.Rounded.Settings,
+                            contentDescription = "Settings",
+                            tint = MaterialTheme.colorScheme.onSurfaceVariant
+                        )
                     }
                 }
-
                 LazyRow(
                     contentPadding        = PaddingValues(horizontal = 16.dp, vertical = 4.dp),
                     horizontalArrangement = Arrangement.spacedBy(8.dp)
@@ -98,7 +99,7 @@ fun HomeScreen(
                             label    = {
                                 Text(
                                     text       = "${filter.emoji} ${filter.label}",
-                                    fontWeight = if (selected) FontWeight.Bold else FontWeight.Medium,
+                                    fontWeight = if (selected) FontWeight.Bold else FontWeight.Normal,
                                     fontSize   = 13.sp
                                 )
                             },
@@ -108,43 +109,48 @@ fun HomeScreen(
                                 containerColor         = MaterialTheme.colorScheme.surface,
                                 labelColor             = MaterialTheme.colorScheme.onSurface
                             ),
-                            shape  = RoundedCornerShape(12.dp)
+                            shape = RoundedCornerShape(12.dp)
                         )
                     }
                 }
-
-                Spacer(Modifier.height(4.dp))
+                Spacer(modifier = Modifier.height(4.dp))
                 HorizontalDivider(
                     color     = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.4f),
                     thickness = 0.5.dp
                 )
             }
         },
-        bottomBar = { LumioBottomNavBar(navController) },
+        bottomBar = {
+            LumioBottomNavBar(navController = navController)
+        },
         floatingActionButton = {
             Column(
                 horizontalAlignment = Alignment.End,
-                verticalArrangement = Arrangement.spacedBy(10.dp)
+                verticalArrangement = Arrangement.spacedBy(12.dp)
             ) {
                 SmallFloatingActionButton(
                     onClick        = { navController.navigate(Screen.AiChat.route) },
                     containerColor = MaterialTheme.colorScheme.secondaryContainer,
                     contentColor   = MaterialTheme.colorScheme.onSecondaryContainer,
-                    shape          = RoundedCornerShape(14.dp),
-                    modifier       = Modifier.size(44.dp)
+                    shape          = RoundedCornerShape(14.dp)
                 ) {
-                    Icon(Icons.Rounded.AutoAwesome, "AI",
-                        modifier = Modifier.size(20.dp))
+                    Icon(
+                        imageVector        = Icons.Rounded.AutoAwesome,
+                        contentDescription = "AI",
+                        modifier           = Modifier.size(20.dp)
+                    )
                 }
                 SmallFloatingActionButton(
                     onClick        = { navController.navigate(Screen.Voice.route) },
                     containerColor = MaterialTheme.colorScheme.tertiaryContainer,
                     contentColor   = MaterialTheme.colorScheme.onTertiaryContainer,
-                    shape          = RoundedCornerShape(14.dp),
-                    modifier       = Modifier.size(44.dp)
+                    shape          = RoundedCornerShape(14.dp)
                 ) {
-                    Icon(Icons.Rounded.Mic, "Voice",
-                        modifier = Modifier.size(20.dp))
+                    Icon(
+                        imageVector        = Icons.Rounded.Mic,
+                        contentDescription = "Voice",
+                        modifier           = Modifier.size(20.dp)
+                    )
                 }
                 FloatingActionButton(
                     onClick        = { navController.navigate(Screen.AddReminder.route) },
@@ -152,9 +158,12 @@ fun HomeScreen(
                     contentColor   = Color.White,
                     shape          = RoundedCornerShape(16.dp)
                 ) {
-                    Icon(Icons.Rounded.Add, "Add", modifier = Modifier.size(26.dp))
+                    Icon(
+                        imageVector        = Icons.Rounded.Add,
+                        contentDescription = "Add",
+                        modifier           = Modifier.size(26.dp)
+                    )
                 }
-            }
             }
         },
         containerColor = MaterialTheme.colorScheme.background
@@ -166,11 +175,9 @@ fun HomeScreen(
                 .padding(padding),
             contentPadding = PaddingValues(bottom = 160.dp, top = 12.dp)
         ) {
-
-            // Stats Row
             item {
                 Row(
-                    modifier = Modifier
+                    modifier              = Modifier
                         .fillMaxWidth()
                         .padding(horizontal = 16.dp),
                     horizontalArrangement = Arrangement.spacedBy(10.dp)
@@ -202,17 +209,16 @@ fun HomeScreen(
                 }
             }
 
-            item { Spacer(Modifier.height(20.dp)) }
+            item { Spacer(modifier = Modifier.height(20.dp)) }
 
-            // Section header
             item {
                 Row(
-                    modifier = Modifier
+                    modifier              = Modifier
                         .fillMaxWidth()
                         .padding(horizontal = 20.dp),
-                    verticalAlignment = Alignment.CenterVertically
+                    verticalAlignment     = Alignment.CenterVertically
                 ) {
-                    Column(Modifier.weight(1f)) {
+                    Column(modifier = Modifier.weight(1f)) {
                         Text(
                             text       = uiState.activeFilter.label,
                             style      = MaterialTheme.typography.titleMedium,
@@ -238,14 +244,12 @@ fun HomeScreen(
                 }
             }
 
-            // Empty state
             if (uiState.displayedReminders.isEmpty()) {
                 item {
                     EmptyState(filter = uiState.activeFilter)
                 }
             }
 
-            // Reminder list
             items(
                 items = uiState.displayedReminders,
                 key   = { it.id }
@@ -315,25 +319,6 @@ private fun StatCard(
 
 @Composable
 private fun EmptyState(filter: HomeFilter) {
-    val emoji = when (filter) {
-        HomeFilter.TODAY     -> "🎉"
-        HomeFilter.COMPLETED -> "✅"
-        HomeFilter.PRIORITY  -> "⚡"
-        HomeFilter.UPCOMING  -> "⏰"
-        HomeFilter.ALL       -> "📋"
-    }
-    val title = when (filter) {
-        HomeFilter.TODAY     -> "All clear today!"
-        HomeFilter.COMPLETED -> "Nothing completed yet"
-        HomeFilter.PRIORITY  -> "No priority items"
-        HomeFilter.UPCOMING  -> "Nothing upcoming"
-        HomeFilter.ALL       -> "Your list is empty"
-    }
-    val subtitle = when (filter) {
-        HomeFilter.TODAY -> "Enjoy your free day! Have a great one."
-        else             -> "Tap + to create your first reminder"
-    }
-
     Column(
         modifier            = Modifier
             .fillMaxWidth()
@@ -348,21 +333,36 @@ private fun EmptyState(filter: HomeFilter) {
                 .background(MaterialTheme.colorScheme.primaryContainer),
             contentAlignment = Alignment.Center
         ) {
-            Text(text = emoji, fontSize = 52.sp)
+            Text(
+                text     = when (filter) {
+                    HomeFilter.TODAY     -> "🎉"
+                    HomeFilter.COMPLETED -> "✅"
+                    HomeFilter.PRIORITY  -> "⚡"
+                    HomeFilter.UPCOMING  -> "⏰"
+                    HomeFilter.ALL       -> "📋"
+                },
+                fontSize = 52.sp
+            )
         }
-
         Text(
-            text       = title,
+            text       = when (filter) {
+                HomeFilter.TODAY     -> "All clear today!"
+                HomeFilter.COMPLETED -> "Nothing completed yet"
+                HomeFilter.PRIORITY  -> "No priority items"
+                HomeFilter.UPCOMING  -> "Nothing upcoming"
+                HomeFilter.ALL       -> "Your list is empty"
+            },
             style      = MaterialTheme.typography.titleMedium,
             fontWeight = FontWeight.Bold
         )
-
         Text(
-            text  = subtitle,
+            text  = when (filter) {
+                HomeFilter.TODAY -> "Enjoy your free day!"
+                else             -> "Tap + to create your first reminder"
+            },
             style = MaterialTheme.typography.bodyMedium,
             color = MaterialTheme.colorScheme.onSurfaceVariant
         )
-
         Surface(
             shape = RoundedCornerShape(14.dp),
             color = MaterialTheme.colorScheme.surfaceVariant
@@ -376,13 +376,13 @@ private fun EmptyState(filter: HomeFilter) {
                 horizontalArrangement = Arrangement.spacedBy(8.dp)
             ) {
                 Icon(
-                    Icons.Rounded.Mic,
+                    imageVector        = Icons.Rounded.Mic,
                     contentDescription = null,
                     tint               = MaterialTheme.colorScheme.primary,
                     modifier           = Modifier.size(16.dp)
                 )
                 Text(
-                    text  = "Try voice: Remind me tomorrow at 5 PM",
+                    text  = "Try: Remind me tomorrow at 5 PM",
                     style = MaterialTheme.typography.bodySmall,
                     color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
@@ -392,8 +392,7 @@ private fun EmptyState(filter: HomeFilter) {
 }
 
 private fun getGreeting(): String {
-    val hour = Calendar.getInstance().get(Calendar.HOUR_OF_DAY)
-    return when (hour) {
+    return when (Calendar.getInstance().get(Calendar.HOUR_OF_DAY)) {
         in 5..11  -> "Good morning"
         in 12..16 -> "Good afternoon"
         in 17..20 -> "Good evening"
