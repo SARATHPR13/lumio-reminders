@@ -18,8 +18,7 @@ data class SettingsUiState(
     val defaultSound     : Boolean = true,
     val defaultVibration : Boolean = true,
     val biometricEnabled : Boolean = false,
-    val fontSize         : String  = "medium",
-    val successMessage   : String? = null
+    val language         : String  = "en"
 )
 
 @HiltViewModel
@@ -38,17 +37,17 @@ class SettingsViewModel @Inject constructor(
                 prefs.themeMode,
                 prefs.dynamicColors,
                 prefs.defaultSound,
-                prefs.defaultVibration
-            ) { theme, dynamic, sound, vibration ->
+                prefs.defaultVibration,
+                prefs.language
+            ) { values ->
                 SettingsUiState(
-                    themeMode        = theme,
-                    dynamicColors    = dynamic,
-                    defaultSound     = sound,
-                    defaultVibration = vibration
+                    themeMode        = values[0] as String,
+                    dynamicColors    = values[1] as Boolean,
+                    defaultSound     = values[2] as Boolean,
+                    defaultVibration = values[3] as Boolean,
+                    language         = values[4] as String
                 )
-            }.collect { state ->
-                _uiState.value = state
-            }
+            }.collect { _uiState.value = it }
         }
     }
 
@@ -56,35 +55,24 @@ class SettingsViewModel @Inject constructor(
         viewModelScope.launch { prefs.setThemeMode(mode) }
     }
 
-    fun setDynamicColors(enabled: Boolean) {
-        viewModelScope.launch { prefs.setDynamicColors(enabled) }
+    fun setDynamicColors(v: Boolean) {
+        viewModelScope.launch { prefs.setDynamicColors(v) }
     }
 
-    fun setDefaultSound(enabled: Boolean) {
-        viewModelScope.launch { prefs.setDefaultSound(enabled) }
+    fun setDefaultSound(v: Boolean) {
+        viewModelScope.launch { prefs.setDefaultSound(v) }
     }
 
-    fun setDefaultVibration(enabled: Boolean) {
-        viewModelScope.launch { prefs.setDefaultVibration(enabled) }
+    fun setDefaultVibration(v: Boolean) {
+        viewModelScope.launch { prefs.setDefaultVibration(v) }
     }
 
-    fun setBiometricEnabled(enabled: Boolean) {
-        _uiState.update { it.copy(biometricEnabled = enabled) }
+    fun setBiometricEnabled(v: Boolean) {
+        _uiState.update { it.copy(biometricEnabled = v) }
     }
 
-    fun backupData() {
-        _uiState.update { it.copy(successMessage = "Backup coming soon!") }
-    }
-
-    fun restoreData() {
-        _uiState.update { it.copy(successMessage = "Restore coming soon!") }
-    }
-
-    fun clearAllReminders() {
-        _uiState.update { it.copy(successMessage = "Clear coming soon!") }
-    }
-
-    fun clearMessage() {
-        _uiState.update { it.copy(successMessage = null) }
+    fun setLanguage(code: String) {
+        viewModelScope.launch { prefs.setLanguage(code) }
+        _uiState.update { it.copy(language = code) }
     }
 }
