@@ -23,7 +23,6 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.navigation.NavController
 import com.lumio.app.data.preferences.FontSize
 import com.lumio.app.presentation.components.LumioBottomNavBar
-import com.lumio.app.presentation.theme.ThemeMode
 
 @Composable
 fun SettingsScreen(
@@ -102,10 +101,10 @@ fun SettingsScreen(
                                 label    = {
                                     Text(
                                         when (mode) {
-                                            ThemeMode.LIGHT  -> "☀️ Light"
-                                            ThemeMode.DARK   -> "🌙 Dark"
-                                            ThemeMode.AMOLED -> "⚫ AMOLED"
-                                            ThemeMode.SYSTEM -> "📱 System"
+                                            "light"  -> "☀️ Light"
+                                            "dark"   -> "🌙 Dark"
+                                            "amoled" -> "⚫ AMOLED"
+                                            "system" -> "📱 System"
                                         },
                                         fontSize = 11.sp
                                     )

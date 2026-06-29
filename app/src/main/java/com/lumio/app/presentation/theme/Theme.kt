@@ -135,3 +135,12 @@ fun LumioTheme(
         content     = content
     )
 }
+
+
+// Theme mode constants for settings
+object ThemeMode {
+    const val LIGHT  = "light"
+    const val DARK   = "dark"
+    const val AMOLED = "amoled"
+    const val SYSTEM = "system"
+}

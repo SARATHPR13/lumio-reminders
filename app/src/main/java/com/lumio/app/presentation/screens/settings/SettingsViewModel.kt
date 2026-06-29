@@ -6,7 +6,6 @@ import androidx.lifecycle.viewModelScope
 import com.lumio.app.data.preferences.AppPreferences
 import com.lumio.app.data.preferences.FontSize
 import com.lumio.app.data.repository.BackupService
-import com.lumio.app.presentation.theme.ThemeMode
 import dagger.hilt.android.lifecycle.HiltViewModel
 import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.flow.*
@@ -17,7 +16,7 @@ import java.util.*
 import javax.inject.Inject
 
 data class SettingsUiState(
-    val themeMode: ThemeMode        = ThemeMode.SYSTEM,
+    val themeMode: ThemeMode        = "system",
     val dynamicColor: Boolean       = true,
     val fontSize: FontSize          = FontSize.MEDIUM,
     val defaultSound: Boolean       = true,
