@@ -1,6 +1,5 @@
 package com.lumio.app.presentation.screens.add
 
-import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
@@ -14,16 +13,16 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.navigation.NavController
-import com.lumio.app.domain.model.Priority
 import com.lumio.app.domain.model.Category
+import com.lumio.app.domain.model.Priority
 import com.lumio.app.domain.model.RepeatType
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -43,7 +42,7 @@ fun AddReminderScreen(
             TopAppBar(
                 title = {
                     Text(
-                        if (uiState.isEditing) "Edit Reminder" else "New Reminder",
+                        text       = "New Reminder",
                         fontWeight = FontWeight.Bold
                     )
                 },
@@ -54,11 +53,11 @@ fun AddReminderScreen(
                 },
                 actions = {
                     TextButton(
-                        onClick  = { viewModel.saveReminder() },
-                        enabled  = uiState.title.isNotBlank() && !uiState.isSaving
+                        onClick = { viewModel.saveReminder() },
+                        enabled = uiState.title.isNotBlank() && !uiState.isSaving
                     ) {
                         Text(
-                            "Save",
+                            text       = "Save",
                             fontWeight = FontWeight.Bold,
                             fontSize   = 16.sp,
                             color      = if (uiState.title.isNotBlank())
@@ -86,18 +85,18 @@ fun AddReminderScreen(
 
             // Title
             OutlinedTextField(
-                value         = uiState.title,
-                onValueChange = { viewModel.setTitle(it) },
-                label         = { Text("What to remember? *") },
-                placeholder   = { Text("e.g. Call mom, Buy milk...") },
-                isError       = uiState.titleError,
+                value          = uiState.title,
+                onValueChange  = { viewModel.setTitle(it) },
+                label          = { Text("What to remember? *") },
+                placeholder    = { Text("e.g. Call mom, Buy milk...") },
+                isError        = uiState.titleError,
                 supportingText = {
                     if (uiState.titleError) Text("Please enter a title")
                 },
-                leadingIcon   = { Icon(Icons.Rounded.Title, null) },
-                modifier      = Modifier.fillMaxWidth(),
-                shape         = RoundedCornerShape(14.dp),
-                singleLine    = true
+                leadingIcon    = { Icon(Icons.Rounded.Title, null) },
+                modifier       = Modifier.fillMaxWidth(),
+                shape          = RoundedCornerShape(14.dp),
+                singleLine     = true
             )
 
             // Description
@@ -112,42 +111,42 @@ fun AddReminderScreen(
                 maxLines      = 4
             )
 
-            // Date & Time Row
+            // Date & Time
             Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
                 OutlinedButton(
-                    onClick  = { viewModel.showDatePicker() },
+                    onClick  = { viewModel.showDatePicker(true) },
                     modifier = Modifier.weight(1f).height(56.dp),
                     shape    = RoundedCornerShape(14.dp)
                 ) {
-                    Icon(Icons.Rounded.CalendarMonth, null,
-                        modifier = Modifier.size(18.dp))
+                    Icon(Icons.Rounded.CalendarMonth, null, modifier = Modifier.size(18.dp))
                     Spacer(Modifier.width(8.dp))
-                    Text(uiState.dateText, fontWeight = FontWeight.Medium)
+                    Text(uiState.dateDisplay, fontWeight = FontWeight.Medium)
                 }
                 OutlinedButton(
-                    onClick  = { viewModel.showTimePicker() },
+                    onClick  = { viewModel.showTimePicker(true) },
                     modifier = Modifier.weight(1f).height(56.dp),
                     shape    = RoundedCornerShape(14.dp)
                 ) {
-                    Icon(Icons.Rounded.Schedule, null,
-                        modifier = Modifier.size(18.dp))
+                    Icon(Icons.Rounded.Schedule, null, modifier = Modifier.size(18.dp))
                     Spacer(Modifier.width(8.dp))
-                    Text(uiState.timeText, fontWeight = FontWeight.Medium)
+                    Text(uiState.timeDisplay, fontWeight = FontWeight.Medium)
                 }
             }
 
-            // Priority Section
-            SectionLabel(text = "Priority", icon = Icons.Rounded.Flag)
+            // Priority
+            FormLabel(text = "Priority", icon = Icons.Rounded.Flag)
             LazyRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                 items(Priority.values()) { priority ->
                     val selected = uiState.priority == priority
-                    val color    = Color(android.graphics.Color.parseColor(priority.colorHex))
+                    val color    = Color(
+                        android.graphics.Color.parseColor(priority.colorHex)
+                    )
                     FilterChip(
                         selected = selected,
                         onClick  = { viewModel.setPriority(priority) },
                         label    = {
                             Text(
-                                "${priority.emoji} ${priority.label}",
+                                text       = "${priority.emoji} ${priority.label}",
                                 fontSize   = 13.sp,
                                 fontWeight = if (selected) FontWeight.Bold else FontWeight.Normal
                             )
@@ -158,13 +157,13 @@ fun AddReminderScreen(
                             containerColor         = MaterialTheme.colorScheme.surface,
                             labelColor             = MaterialTheme.colorScheme.onSurface
                         ),
-                        shape    = RoundedCornerShape(10.dp)
+                        shape = RoundedCornerShape(10.dp)
                     )
                 }
             }
 
-            // Category Section
-            SectionLabel(text = "Category", icon = Icons.Rounded.Category)
+            // Category
+            FormLabel(text = "Category", icon = Icons.Rounded.Category)
             LazyRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                 item {
                     FilterChip(
@@ -176,13 +175,15 @@ fun AddReminderScreen(
                 }
                 items(Category.defaults) { cat ->
                     val selected = uiState.category?.id == cat.id
-                    val color    = Color(android.graphics.Color.parseColor(cat.colorHex))
+                    val color    = Color(
+                        android.graphics.Color.parseColor(cat.colorHex)
+                    )
                     FilterChip(
                         selected = selected,
                         onClick  = { viewModel.setCategory(cat) },
                         label    = {
                             Text(
-                                "${cat.emoji} ${cat.name}",
+                                text       = "${cat.emoji} ${cat.name}",
                                 fontSize   = 13.sp,
                                 fontWeight = if (selected) FontWeight.Bold else FontWeight.Normal
                             )
@@ -193,13 +194,13 @@ fun AddReminderScreen(
                             containerColor         = MaterialTheme.colorScheme.surface,
                             labelColor             = MaterialTheme.colorScheme.onSurface
                         ),
-                        shape    = RoundedCornerShape(10.dp)
+                        shape = RoundedCornerShape(10.dp)
                     )
                 }
             }
 
-            // Repeat Section
-            SectionLabel(text = "Repeat", icon = Icons.Rounded.Repeat)
+            // Repeat
+            FormLabel(text = "Repeat", icon = Icons.Rounded.Repeat)
             LazyRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                 items(RepeatType.values()) { repeat ->
                     val selected = uiState.repeatType == repeat
@@ -208,7 +209,7 @@ fun AddReminderScreen(
                         onClick  = { viewModel.setRepeatType(repeat) },
                         label    = {
                             Text(
-                                repeat.label,
+                                text       = repeat.label,
                                 fontSize   = 13.sp,
                                 fontWeight = if (selected) FontWeight.Bold else FontWeight.Normal
                             )
@@ -219,37 +220,71 @@ fun AddReminderScreen(
                             containerColor         = MaterialTheme.colorScheme.surface,
                             labelColor             = MaterialTheme.colorScheme.onSurface
                         ),
-                        shape    = RoundedCornerShape(10.dp)
+                        shape = RoundedCornerShape(10.dp)
                     )
                 }
             }
 
-            // Notification Toggles
-            SectionLabel(text = "Notifications", icon = Icons.Rounded.NotificationsActive)
+            // Sound & Vibration
+            FormLabel(text = "Notifications", icon = Icons.Rounded.NotificationsActive)
             Card(
-                shape  = RoundedCornerShape(16.dp),
-                colors = CardDefaults.cardColors(
+                shape     = RoundedCornerShape(16.dp),
+                colors    = CardDefaults.cardColors(
                     containerColor = MaterialTheme.colorScheme.surface
                 ),
-                elevation = CardDefaults.cardElevation(0.dp)
+                elevation = CardDefaults.cardElevation(defaultElevation = 0.dp)
             ) {
                 Column {
-                    SwitchRow(
-                        label    = "Sound",
-                        icon     = Icons.Rounded.VolumeUp,
-                        checked  = uiState.soundEnabled,
-                        onToggle = { viewModel.setSoundEnabled(it) }
-                    )
+                    Row(
+                        modifier              = Modifier
+                            .fillMaxWidth()
+                            .padding(horizontal = 16.dp, vertical = 14.dp),
+                        verticalAlignment     = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.spacedBy(12.dp)
+                    ) {
+                        Icon(
+                            Icons.Rounded.VolumeUp,
+                            contentDescription = null,
+                            tint               = MaterialTheme.colorScheme.onSurfaceVariant,
+                            modifier           = Modifier.size(22.dp)
+                        )
+                        Text(
+                            text     = "Sound",
+                            style    = MaterialTheme.typography.bodyMedium,
+                            modifier = Modifier.weight(1f)
+                        )
+                        Switch(
+                            checked         = uiState.soundEnabled,
+                            onCheckedChange = { viewModel.setSoundEnabled(it) }
+                        )
+                    }
                     HorizontalDivider(
                         modifier  = Modifier.padding(horizontal = 16.dp),
                         thickness = 0.5.dp
                     )
-                    SwitchRow(
-                        label    = "Vibration",
-                        icon     = Icons.Rounded.Vibration,
-                        checked  = uiState.vibrationEnabled,
-                        onToggle = { viewModel.setVibrationEnabled(it) }
-                    )
+                    Row(
+                        modifier              = Modifier
+                            .fillMaxWidth()
+                            .padding(horizontal = 16.dp, vertical = 14.dp),
+                        verticalAlignment     = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.spacedBy(12.dp)
+                    ) {
+                        Icon(
+                            Icons.Rounded.Vibration,
+                            contentDescription = null,
+                            tint               = MaterialTheme.colorScheme.onSurfaceVariant,
+                            modifier           = Modifier.size(22.dp)
+                        )
+                        Text(
+                            text     = "Vibration",
+                            style    = MaterialTheme.typography.bodyMedium,
+                            modifier = Modifier.weight(1f)
+                        )
+                        Switch(
+                            checked         = uiState.vibrationEnabled,
+                            onCheckedChange = { viewModel.setVibrationEnabled(it) }
+                        )
+                    }
                 }
             }
 
@@ -260,10 +295,7 @@ fun AddReminderScreen(
                     .fillMaxWidth()
                     .height(56.dp),
                 shape    = RoundedCornerShape(16.dp),
-                enabled  = uiState.title.isNotBlank() && !uiState.isSaving,
-                colors   = ButtonDefaults.buttonColors(
-                    containerColor = MaterialTheme.colorScheme.primary
-                )
+                enabled  = uiState.title.isNotBlank() && !uiState.isSaving
             ) {
                 if (uiState.isSaving) {
                     CircularProgressIndicator(
@@ -279,7 +311,7 @@ fun AddReminderScreen(
                     )
                     Spacer(modifier = Modifier.width(10.dp))
                     Text(
-                        if (uiState.isEditing) "Update Reminder" else "Save Reminder",
+                        text       = "Save Reminder",
                         fontWeight = FontWeight.Bold,
                         fontSize   = 16.sp
                     )
@@ -290,57 +322,55 @@ fun AddReminderScreen(
         }
     }
 
-    // Date Picker Dialog
+    // Date Picker
     if (uiState.showDatePicker) {
-        val datePickerState = rememberDatePickerState(
+        val dpState = rememberDatePickerState(
             initialSelectedDateMillis = uiState.dateTimeMillis
         )
         DatePickerDialog(
-            onDismissRequest = { viewModel.hideDatePicker() },
+            onDismissRequest = { viewModel.showDatePicker(false) },
             confirmButton    = {
                 TextButton(onClick = {
-                    datePickerState.selectedDateMillis?.let {
-                        viewModel.setDate(it)
-                    }
-                    viewModel.hideDatePicker()
+                    dpState.selectedDateMillis?.let { viewModel.setDate(it) }
+                    viewModel.showDatePicker(false)
                 }) { Text("OK", fontWeight = FontWeight.Bold) }
             },
             dismissButton    = {
-                TextButton(onClick = { viewModel.hideDatePicker() }) {
+                TextButton(onClick = { viewModel.showDatePicker(false) }) {
                     Text("Cancel")
                 }
             }
         ) {
-            DatePicker(state = datePickerState)
+            DatePicker(state = dpState)
         }
     }
 
-    // Time Picker Dialog
+    // Time Picker
     if (uiState.showTimePicker) {
-        val timePickerState = rememberTimePickerState(
-            initialHour   = uiState.selectedHour,
-            initialMinute = uiState.selectedMinute,
+        val tpState = rememberTimePickerState(
+            initialHour   = uiState.hour,
+            initialMinute = uiState.minute,
             is24Hour      = false
         )
         AlertDialog(
-            onDismissRequest = { viewModel.hideTimePicker() },
+            onDismissRequest = { viewModel.showTimePicker(false) },
             title            = { Text("Select Time", fontWeight = FontWeight.Bold) },
             text             = {
                 Box(
-                    modifier        = Modifier.fillMaxWidth(),
+                    modifier         = Modifier.fillMaxWidth(),
                     contentAlignment = Alignment.Center
                 ) {
-                    TimePicker(state = timePickerState)
+                    TimePicker(state = tpState)
                 }
             },
             confirmButton    = {
                 TextButton(onClick = {
-                    viewModel.setTime(timePickerState.hour, timePickerState.minute)
-                    viewModel.hideTimePicker()
+                    viewModel.setTime(tpState.hour, tpState.minute)
+                    viewModel.showTimePicker(false)
                 }) { Text("OK", fontWeight = FontWeight.Bold) }
             },
             dismissButton    = {
-                TextButton(onClick = { viewModel.hideTimePicker() }) {
+                TextButton(onClick = { viewModel.showTimePicker(false) }) {
                     Text("Cancel")
                 }
             },
@@ -350,7 +380,7 @@ fun AddReminderScreen(
 }
 
 @Composable
-private fun SectionLabel(text: String, icon: androidx.compose.ui.graphics.vector.ImageVector) {
+private fun FormLabel(text: String, icon: ImageVector) {
     Row(
         verticalAlignment     = Alignment.CenterVertically,
         horizontalArrangement = Arrangement.spacedBy(8.dp)
@@ -365,42 +395,6 @@ private fun SectionLabel(text: String, icon: androidx.compose.ui.graphics.vector
             text       = text,
             style      = MaterialTheme.typography.titleSmall,
             fontWeight = FontWeight.SemiBold
-        )
-    }
-}
-
-@Composable
-private fun SwitchRow(
-    label: String,
-    icon: androidx.compose.ui.graphics.vector.ImageVector,
-    checked: Boolean,
-    onToggle: (Boolean) -> Unit
-) {
-    Row(
-        modifier              = Modifier
-            .fillMaxWidth()
-            .padding(horizontal = 16.dp, vertical = 12.dp),
-        verticalAlignment     = Alignment.CenterVertically,
-        horizontalArrangement = Arrangement.spacedBy(12.dp)
-    ) {
-        Icon(
-            imageVector        = icon,
-            contentDescription = null,
-            tint               = MaterialTheme.colorScheme.onSurfaceVariant,
-            modifier           = Modifier.size(20.dp)
-        )
-        Text(
-            text     = label,
-            style    = MaterialTheme.typography.bodyMedium,
-            modifier = Modifier.weight(1f)
-        )
-        Switch(
-            checked         = checked,
-            onCheckedChange = onToggle,
-            colors          = SwitchDefaults.colors(
-                checkedThumbColor  = Color.White,
-                checkedTrackColor  = MaterialTheme.colorScheme.primary
-            )
         )
     }
 }

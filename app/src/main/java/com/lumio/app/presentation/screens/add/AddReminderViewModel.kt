@@ -20,6 +20,12 @@ import javax.inject.Inject
 data class AddReminderUiState(
     val title: String             = "",
     val description: String       = "",
+    val dateDisplay: String = "Today",
+    val timeDisplay: String = "Set Time",
+    val hour: Int = 9,
+    val minute: Int = 0,
+    val showDatePicker: Boolean = false,
+    val showTimePicker: Boolean = false,
     val dateTimeMillis: Long      = System.currentTimeMillis() + 3_600_000L,
     val priority: Priority        = Priority.NONE,
     val category: Category?       = null,
@@ -96,4 +102,43 @@ class AddReminderViewModel @Inject constructor(
             _state.update { it.copy(isSaving = false, isSaved = true) }
         }
     }
+
+    fun showDatePicker(show: Boolean) {
+        _uiState.update { it.copy(showDatePicker = show) }
+    }
+
+    fun showTimePicker(show: Boolean) {
+        _uiState.update { it.copy(showTimePicker = show) }
+    }
+
+    fun setDate(millis: Long) {
+        val cal = java.util.Calendar.getInstance().apply { timeInMillis = millis }
+        val display = "${cal.get(java.util.Calendar.DAY_OF_MONTH)}/${cal.get(java.util.Calendar.MONTH)+1}/${cal.get(java.util.Calendar.YEAR)}"
+        _uiState.update {
+            it.copy(
+                dateTimeMillis = millis,
+                dateDisplay    = display
+            )
+        }
+    }
+
+    fun setTime(h: Int, m: Int) {
+        val ampm  = if (h < 12) "AM" else "PM"
+        val hour  = if (h % 12 == 0) 12 else h % 12
+        val display = "$hour:${m.toString().padStart(2,'0')} $ampm"
+        val cal = java.util.Calendar.getInstance().apply {
+            timeInMillis = _uiState.value.dateTimeMillis
+            set(java.util.Calendar.HOUR_OF_DAY, h)
+            set(java.util.Calendar.MINUTE, m)
+        }
+        _uiState.update {
+            it.copy(
+                dateTimeMillis = cal.timeInMillis,
+                timeDisplay    = display,
+                hour           = h,
+                minute         = m
+            )
+        }
+    }
+
 }
