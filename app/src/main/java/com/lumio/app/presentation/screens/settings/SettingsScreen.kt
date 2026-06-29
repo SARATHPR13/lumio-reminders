@@ -105,6 +105,7 @@ fun SettingsScreen(
                                             "dark"   -> "🌙 Dark"
                                             "amoled" -> "⚫ AMOLED"
                                             "system" -> "📱 System"
+                                            else     -> mode
                                         },
                                         fontSize = 11.sp
                                     )

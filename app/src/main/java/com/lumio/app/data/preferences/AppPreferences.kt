@@ -66,7 +66,7 @@ class AppPreferences @Inject constructor(
         }
 
     suspend fun setFontSize(size: FontSize) {
-        dataStore.edit { it[KEY_FONT_SIZE] = size }
+        dataStore.edit { it[KEY_FONT_SIZE] = size.name }
     }
 
     // ── Notifications ────────────────────────────────
