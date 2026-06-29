@@ -12,6 +12,7 @@ sealed class Screen(val route: String) {
     object Health       : Screen("health")
     object Stats        : Screen("stats")
     object Location     : Screen("location")
+    object Weather      : Screen("weather")
 
     object EditReminder : Screen("edit_reminder/{reminderId}") {
         fun createRoute(id: Long) = "edit_reminder/$id"

@@ -24,6 +24,7 @@ import com.lumio.app.presentation.screens.onboarding.OnboardingScreen
 import com.lumio.app.presentation.screens.search.SearchScreen
 import com.lumio.app.presentation.screens.settings.SettingsScreen
 import com.lumio.app.presentation.screens.stats.StatsScreen
+import com.lumio.app.presentation.screens.weather.WeatherScreen
 import com.lumio.app.presentation.screens.voice.VoiceScreen
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow

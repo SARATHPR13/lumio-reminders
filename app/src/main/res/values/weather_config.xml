@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- Free API key from openweathermap.org -->
+    <!-- Sign up free at: openweathermap.org/api -->
+    <string name="weather_api_key">YOUR_OPENWEATHER_API_KEY</string>
+    <string name="weather_api_base">https://api.openweathermap.org/data/2.5/</string>
+</resources>
