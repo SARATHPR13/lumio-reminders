@@ -1,5 +1,6 @@
 package com.lumio.app.presentation.screens.add
 
+import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.lumio.app.alarm.AlarmScheduler
@@ -18,89 +19,118 @@ import java.util.Calendar
 import javax.inject.Inject
 
 data class AddReminderUiState(
-    val title: String             = "",
-    val description: String       = "",
-    val dateDisplay: String = "Today",
-    val timeDisplay: String = "Set Time",
-    val hour: Int = 9,
-    val minute: Int = 0,
-    val showDatePicker: Boolean = false,
-    val showTimePicker: Boolean = false,
-    val dateTimeMillis: Long      = System.currentTimeMillis() + 3_600_000L,
-    val priority: Priority        = Priority.NONE,
-    val category: Category?       = null,
-    val repeatType: RepeatType    = RepeatType.NONE,
-    val soundEnabled: Boolean     = true,
-    val vibrationEnabled: Boolean = true,
-    val showDatePicker: Boolean   = false,
-    val showTimePicker: Boolean   = false,
-    val titleError: Boolean       = false,
-    val isSaving: Boolean         = false,
-    val isSaved: Boolean          = false
+    val title            : String    = "",
+    val description      : String    = "",
+    val dateTimeMillis   : Long      = System.currentTimeMillis() + 3_600_000L,
+    val priority         : Priority  = Priority.NONE,
+    val category         : Category? = null,
+    val repeatType       : RepeatType = RepeatType.NONE,
+    val soundEnabled     : Boolean   = true,
+    val vibrationEnabled : Boolean   = true,
+    val showDatePicker   : Boolean   = false,
+    val showTimePicker   : Boolean   = false,
+    val dateDisplay      : String    = "Today",
+    val timeDisplay      : String    = "9:00 AM",
+    val hour             : Int       = 9,
+    val minute           : Int       = 0,
+    val isSaving         : Boolean   = false,
+    val isSaved          : Boolean   = false,
+    val titleError       : Boolean   = false,
+    val isEditing        : Boolean   = false,
+    val editingId        : Long      = -1L
 )
 
 @HiltViewModel
 class AddReminderViewModel @Inject constructor(
     private val reminderRepository: ReminderRepository,
-    private val alarmScheduler: AlarmScheduler
+    private val alarmScheduler    : AlarmScheduler,
+    savedStateHandle              : SavedStateHandle
 ) : ViewModel() {
 
-    private val _state = MutableStateFlow(AddReminderUiState())
-    val uiState: StateFlow<AddReminderUiState> = _state.asStateFlow()
+    private val _uiState = MutableStateFlow(AddReminderUiState())
+    val uiState: StateFlow<AddReminderUiState> = _uiState.asStateFlow()
 
-    fun setTitle(v: String)        = _state.update { it.copy(title = v,        titleError = false) }
-    fun setDescription(v: String)  = _state.update { it.copy(description = v)  }
-    fun setPriority(p: Priority)   = _state.update { it.copy(priority = p)     }
-    fun setCategory(c: Category?)  = _state.update { it.copy(category = c)     }
-    fun setRepeat(r: RepeatType)   = _state.update { it.copy(repeatType = r)   }
-    fun setSound(v: Boolean)       = _state.update { it.copy(soundEnabled = v) }
-    fun setVibration(v: Boolean)   = _state.update { it.copy(vibrationEnabled = v) }
-    fun showDate(v: Boolean)       = _state.update { it.copy(showDatePicker = v) }
-    fun showTime(v: Boolean)       = _state.update { it.copy(showTimePicker = v) }
-
-    fun setDate(millis: Long) {
-        val cur = Calendar.getInstance().apply { timeInMillis = _state.value.dateTimeMillis }
-        val sel = Calendar.getInstance().apply { timeInMillis = millis }
-        cur.set(Calendar.YEAR,         sel.get(Calendar.YEAR))
-        cur.set(Calendar.MONTH,        sel.get(Calendar.MONTH))
-        cur.set(Calendar.DAY_OF_MONTH, sel.get(Calendar.DAY_OF_MONTH))
-        _state.update { it.copy(dateTimeMillis = cur.timeInMillis, showDatePicker = false) }
-    }
-
-    fun setTime(hour: Int, minute: Int) {
-        val cal = Calendar.getInstance().apply { timeInMillis = _state.value.dateTimeMillis }
-        cal.set(Calendar.HOUR_OF_DAY, hour)
-        cal.set(Calendar.MINUTE, minute)
-        cal.set(Calendar.SECOND, 0)
-        _state.update { it.copy(dateTimeMillis = cal.timeInMillis, showTimePicker = false) }
-    }
-
-    fun saveReminder() {
-        val s = _state.value
-        if (s.title.isBlank()) {
-            _state.update { it.copy(titleError = true) }
-            return
+    init {
+        val reminderId = savedStateHandle.get<Long>("reminderId") ?: -1L
+        if (reminderId != -1L) {
+            loadReminder(reminderId)
+        } else {
+            setInitialDateTime()
         }
+    }
 
-        val reminder = Reminder(
-            title            = s.title.trim(),
-            description      = s.description.trim(),
-            dateTimeMillis   = s.dateTimeMillis,
-            priority         = s.priority,
-            category         = s.category,
-            repeatType       = s.repeatType,
-            soundEnabled     = s.soundEnabled,
-            vibrationEnabled = s.vibrationEnabled
-        )
+    private fun setInitialDateTime() {
+        val cal = Calendar.getInstance().apply {
+            add(Calendar.HOUR_OF_DAY, 1)
+            set(Calendar.MINUTE, 0)
+            set(Calendar.SECOND, 0)
+        }
+        val h   = cal.get(Calendar.HOUR_OF_DAY)
+        val m   = cal.get(Calendar.MINUTE)
+        _uiState.update {
+            it.copy(
+                dateTimeMillis = cal.timeInMillis,
+                dateDisplay    = formatDate(cal),
+                timeDisplay    = formatTime(h, m),
+                hour           = h,
+                minute         = m
+            )
+        }
+    }
 
+    private fun loadReminder(id: Long) {
         viewModelScope.launch {
-            _state.update { it.copy(isSaving = true) }
-            val id = reminderRepository.insertReminder(reminder)
-            val savedReminder = reminder.copy(id = id)
-            // Schedule the alarm immediately after saving
-            alarmScheduler.schedule(savedReminder)
-            _state.update { it.copy(isSaving = false, isSaved = true) }
+            val reminder = reminderRepository.getReminderById(id) ?: return@launch
+            val cal      = Calendar.getInstance().apply { timeInMillis = reminder.dateTimeMillis }
+            val h        = cal.get(Calendar.HOUR_OF_DAY)
+            val m        = cal.get(Calendar.MINUTE)
+            _uiState.update {
+                it.copy(
+                    title            = reminder.title,
+                    description      = reminder.description,
+                    dateTimeMillis   = reminder.dateTimeMillis,
+                    priority         = reminder.priority,
+                    category         = reminder.category,
+                    repeatType       = reminder.repeatType,
+                    soundEnabled     = reminder.soundEnabled,
+                    vibrationEnabled = reminder.vibrationEnabled,
+                    dateDisplay      = formatDate(cal),
+                    timeDisplay      = formatTime(h, m),
+                    hour             = h,
+                    minute           = m,
+                    isEditing        = true,
+                    editingId        = id
+                )
+            }
         }
+    }
+
+    fun setTitle(v: String) {
+        _uiState.update { it.copy(title = v, titleError = false) }
+    }
+
+    fun setDescription(v: String) {
+        _uiState.update { it.copy(description = v) }
+    }
+
+    fun setPriority(v: Priority) {
+        _uiState.update { it.copy(priority = v) }
+    }
+
+    fun setCategory(v: Category?) {
+        _uiState.update { it.copy(category = v) }
+    }
+
+    fun setRepeatType(v: RepeatType) {
+        _uiState.update { it.copy(repeatType = v) }
+    }
+
+    fun setSoundEnabled(v: Boolean) {
+        _uiState.update { it.copy(soundEnabled = v) }
+    }
+
+    fun setVibrationEnabled(v: Boolean) {
+        _uiState.update { it.copy(vibrationEnabled = v) }
     }
 
     fun showDatePicker(show: Boolean) {
@@ -112,33 +142,87 @@ class AddReminderViewModel @Inject constructor(
     }
 
     fun setDate(millis: Long) {
-        val cal = java.util.Calendar.getInstance().apply { timeInMillis = millis }
-        val display = "${cal.get(java.util.Calendar.DAY_OF_MONTH)}/${cal.get(java.util.Calendar.MONTH)+1}/${cal.get(java.util.Calendar.YEAR)}"
+        val s   = _uiState.value
+        val cal = Calendar.getInstance().apply {
+            timeInMillis = millis
+            set(Calendar.HOUR_OF_DAY, s.hour)
+            set(Calendar.MINUTE, s.minute)
+            set(Calendar.SECOND, 0)
+        }
         _uiState.update {
             it.copy(
-                dateTimeMillis = millis,
-                dateDisplay    = display
+                dateTimeMillis = cal.timeInMillis,
+                dateDisplay    = formatDate(cal)
             )
         }
     }
 
     fun setTime(h: Int, m: Int) {
-        val ampm  = if (h < 12) "AM" else "PM"
-        val hour  = if (h % 12 == 0) 12 else h % 12
-        val display = "$hour:${m.toString().padStart(2,'0')} $ampm"
-        val cal = java.util.Calendar.getInstance().apply {
+        val cal = Calendar.getInstance().apply {
             timeInMillis = _uiState.value.dateTimeMillis
-            set(java.util.Calendar.HOUR_OF_DAY, h)
-            set(java.util.Calendar.MINUTE, m)
+            set(Calendar.HOUR_OF_DAY, h)
+            set(Calendar.MINUTE, m)
+            set(Calendar.SECOND, 0)
         }
         _uiState.update {
             it.copy(
                 dateTimeMillis = cal.timeInMillis,
-                timeDisplay    = display,
+                timeDisplay    = formatTime(h, m),
                 hour           = h,
                 minute         = m
             )
         }
     }
 
+    fun saveReminder() {
+        val s = _uiState.value
+        if (s.title.isBlank()) {
+            _uiState.update { it.copy(titleError = true) }
+            return
+        }
+        viewModelScope.launch {
+            _uiState.update { it.copy(isSaving = true) }
+            try {
+                val reminder = Reminder(
+                    id               = if (s.isEditing) s.editingId else 0L,
+                    title            = s.title.trim(),
+                    description      = s.description.trim(),
+                    dateTimeMillis   = s.dateTimeMillis,
+                    priority         = s.priority,
+                    category         = s.category,
+                    repeatType       = s.repeatType,
+                    soundEnabled     = s.soundEnabled,
+                    vibrationEnabled = s.vibrationEnabled
+                )
+                val id = if (s.isEditing) {
+                    reminderRepository.updateReminder(reminder)
+                    s.editingId
+                } else {
+                    reminderRepository.insertReminder(reminder)
+                }
+                alarmScheduler.schedule(reminder.copy(id = id))
+                _uiState.update { it.copy(isSaving = false, isSaved = true) }
+            } catch (e: Exception) {
+                _uiState.update { it.copy(isSaving = false) }
+            }
+        }
+    }
+
+    private fun formatDate(cal: Calendar): String {
+        val today    = Calendar.getInstance()
+        val tomorrow = Calendar.getInstance().apply { add(Calendar.DAY_OF_YEAR, 1) }
+        return when {
+            cal.get(Calendar.DAY_OF_YEAR) == today.get(Calendar.DAY_OF_YEAR) &&
+            cal.get(Calendar.YEAR) == today.get(Calendar.YEAR) -> "Today"
+            cal.get(Calendar.DAY_OF_YEAR) == tomorrow.get(Calendar.DAY_OF_YEAR) &&
+            cal.get(Calendar.YEAR) == tomorrow.get(Calendar.YEAR) -> "Tomorrow"
+            else -> "${cal.get(Calendar.DAY_OF_MONTH)}/${cal.get(Calendar.MONTH)+1}/${cal.get(Calendar.YEAR)}"
+        }
+    }
+
+    private fun formatTime(h: Int, m: Int): String {
+        val ampm = if (h < 12) "AM" else "PM"
+        val hour = if (h % 12 == 0) 12 else h % 12
+        return "$hour:${m.toString().padStart(2, '0')} $ampm"
+    }
 }
