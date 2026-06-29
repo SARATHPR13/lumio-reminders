@@ -146,13 +146,14 @@ fun HomeScreen(
                     Icon(Icons.Rounded.Mic, "Voice",
                         modifier = Modifier.size(20.dp))
                 }
-                ExtendedFloatingActionButton(
+                FloatingActionButton(
                     onClick        = { navController.navigate(Screen.AddReminder.route) },
                     containerColor = MaterialTheme.colorScheme.primary,
                     contentColor   = Color.White,
-                    shape          = RoundedCornerShape(18.dp),
-                    icon = { Icon(Icons.Rounded.Add, "Add") },
-                    text = { Text("Add Reminder", fontWeight = FontWeight.Bold) }
+                    shape          = RoundedCornerShape(16.dp)
+                ) {
+                    Icon(Icons.Rounded.Add, "Add", modifier = Modifier.size(26.dp))
+                } }
                 )
             }
         },
