@@ -1,0 +1,27 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">लूमियो</string>
+    <string name="app_tagline">स्मार्ट रिमाइंडर</string>
+    <string name="nav_home">होम</string>
+    <string name="nav_calendar">कैलेंडर</string>
+    <string name="nav_categories">श्रेणियाँ</string>
+    <string name="nav_settings">सेटिंग्स</string>
+    <string name="action_add">रिमाइंडर जोड़ें</string>
+    <string name="action_save">सहेजें</string>
+    <string name="action_cancel">रद्द करें</string>
+    <string name="action_delete">हटाएं</string>
+    <string name="action_done">पूर्ण</string>
+    <string name="action_snooze">स्नूज़</string>
+    <string name="empty_no_reminders">अभी तक कोई रिमाइंडर नहीं</string>
+    <string name="empty_add_hint">+ दबाएं और पहला रिमाइंडर जोड़ें</string>
+    <string name="priority_urgent">अत्यावश्यक</string>
+    <string name="priority_high">उच्च</string>
+    <string name="priority_medium">मध्यम</string>
+    <string name="priority_low">कम</string>
+    <string name="snooze_5_min">5 मिनट स्नूज़</string>
+    <string name="snooze_15_min">15 मिनट स्नूज़</string>
+    <string name="snooze_30_min">30 मिनट स्नूज़</string>
+    <string name="widget_small_name">लूमियो — छोटा</string>
+    <string name="widget_large_name">लूमियो — बड़ा</string>
+    <string name="widget_transparent_name">लूमियो — पारदर्शी</string>
+</resources>

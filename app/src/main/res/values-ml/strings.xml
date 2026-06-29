@@ -1,0 +1,27 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">ലൂമിയോ</string>
+    <string name="app_tagline">സ്മാർട്ട് റിമൈൻഡറുകൾ</string>
+    <string name="nav_home">ഹോം</string>
+    <string name="nav_calendar">കലണ്ടർ</string>
+    <string name="nav_categories">വിഭാഗങ്ങൾ</string>
+    <string name="nav_settings">ക്രമീകരണം</string>
+    <string name="action_add">റിമൈൻഡർ ചേർക്കുക</string>
+    <string name="action_save">സേവ് ചെയ്യുക</string>
+    <string name="action_cancel">റദ്ദാക്കുക</string>
+    <string name="action_delete">ഇല്ലാതാക്കുക</string>
+    <string name="action_done">പൂർത്തിയായി</string>
+    <string name="action_snooze">ഒന്ന് നിർത്തുക</string>
+    <string name="empty_no_reminders">ഇനി ഒരു റിമൈൻഡറും ഇല്ല</string>
+    <string name="empty_add_hint">+ ടാപ്പ് ചെയ്ത് ആദ്യ റിമൈൻഡർ ചേർക്കുക</string>
+    <string name="priority_urgent">അടിയന്തിരം</string>
+    <string name="priority_high">ഉയർന്ന</string>
+    <string name="priority_medium">മധ്യം</string>
+    <string name="priority_low">കുറഞ്ഞ</string>
+    <string name="snooze_5_min">5 മിനിറ്റ് നിർത്തുക</string>
+    <string name="snooze_15_min">15 മിനിറ്റ് നിർത്തുക</string>
+    <string name="snooze_30_min">30 മിനിറ്റ് നിർത്തുക</string>
+    <string name="widget_small_name">ലൂമിയോ — ചെറുത്</string>
+    <string name="widget_large_name">ലൂമിയോ — വലുത്</string>
+    <string name="widget_transparent_name">ലൂമിയോ — സുതാര്യം</string>
+</resources>
