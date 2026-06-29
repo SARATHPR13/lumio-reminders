@@ -123,6 +123,14 @@ fun HomeScreen(
                 verticalArrangement = Arrangement.spacedBy(12.dp)
             ) {
                 SmallFloatingActionButton(
+                    onClick        = { navController.navigate(Screen.AiChat.route) },
+                    containerColor = Color(0xFF7B2FBE).copy(alpha = 0.15f),
+                    contentColor   = Color(0xFF7B2FBE),
+                    shape          = RoundedCornerShape(16.dp)
+                ) {
+                    Icon(Icons.Rounded.AutoAwesome, "AI")
+                }
+                SmallFloatingActionButton(
                     onClick        = { navController.navigate(Screen.Location.route) },
                     containerColor = MaterialTheme.colorScheme.tertiaryContainer,
                     contentColor   = MaterialTheme.colorScheme.onTertiaryContainer,

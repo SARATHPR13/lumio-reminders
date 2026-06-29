@@ -27,6 +27,7 @@ fun LumioBottomNavBar(navController: NavController) {
         NavItem(Screen.Calendar,   "Calendar",   Icons.Rounded.CalendarMonth),
         NavItem(Screen.Health,     "Health",     Icons.Rounded.Favorite),
         NavItem(Screen.Stats,      "Stats",      Icons.Rounded.BarChart),
+        NavItem(Screen.AiChat,     "AI Chat",    Icons.Rounded.AutoAwesome),
         NavItem(Screen.Settings,   "Settings",   Icons.Rounded.Settings),
     )
 
