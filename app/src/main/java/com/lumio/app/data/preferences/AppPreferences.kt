@@ -162,23 +162,3 @@ class AppPreferences @Inject constructor(
         dataStore.edit { it[KEY_FIRST_LAUNCH] = first }
     }
 }
-
-enum class FontSize(val label: String, val scale: Float) {
-    SMALL ("Small",  0.85f),
-    MEDIUM("Medium", 1.00f),
-    LARGE ("Large",  1.15f),
-    XLARGE("X-Large",1.30f)
-}
-
-    suspend fun setDynamicColors(enabled: Boolean) {
-        dataStore.edit { it[KEY_DYNAMIC_COLOR] = enabled }
-    }
-
-    suspend fun setDefaultSound(enabled: Boolean) {
-        dataStore.edit { it[KEY_DEFAULT_SOUND] = enabled }
-    }
-
-    suspend fun setDefaultVibration(enabled: Boolean) {
-        dataStore.edit { it[KEY_DEFAULT_VIBRATION] = enabled }
-    }
-}
