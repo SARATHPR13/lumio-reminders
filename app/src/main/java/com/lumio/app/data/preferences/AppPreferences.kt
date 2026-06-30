@@ -8,7 +8,6 @@ import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.catch
 import kotlinx.coroutines.flow.map
-import java.io.IOException
 import javax.inject.Inject
 import javax.inject.Singleton
 
@@ -31,67 +30,82 @@ class AppPreferences @Inject constructor(
         val KEY_LANGUAGE          = stringPreferencesKey("language")
     }
 
+    // Every flow below catches ANY exception from the underlying DataStore
+    // read (not just IOException) and falls back to a safe default. This is
+    // deliberately defensive: these flows are read very early, during the
+    // very first app launch before Onboarding/Home is even chosen, so a
+    // single uncaught exception here previously crashed the whole app on
+    // first open instead of just the read silently falling back.
+
     val themeMode: Flow<String> = dataStore.data
-        .catch { if (it is IOException) emit(emptyPreferences()) else throw it }
+        .catch { emit(emptyPreferences()) }
         .map { it[KEY_THEME_MODE] ?: "light" }
+        .catch { emit("light") }
 
     val dynamicColors: Flow<Boolean> = dataStore.data
-        .catch { if (it is IOException) emit(emptyPreferences()) else throw it }
+        .catch { emit(emptyPreferences()) }
         .map { it[KEY_DYNAMIC_COLOR] ?: true }
+        .catch { emit(true) }
 
     val defaultSound: Flow<Boolean> = dataStore.data
-        .catch { if (it is IOException) emit(emptyPreferences()) else throw it }
+        .catch { emit(emptyPreferences()) }
         .map { it[KEY_DEFAULT_SOUND] ?: true }
+        .catch { emit(true) }
 
     val defaultVibration: Flow<Boolean> = dataStore.data
-        .catch { if (it is IOException) emit(emptyPreferences()) else throw it }
+        .catch { emit(emptyPreferences()) }
         .map { it[KEY_DEFAULT_VIBRATION] ?: true }
+        .catch { emit(true) }
 
     val biometricEnabled: Flow<Boolean> = dataStore.data
-        .catch { if (it is IOException) emit(emptyPreferences()) else throw it }
+        .catch { emit(emptyPreferences()) }
         .map { it[KEY_BIOMETRIC] ?: false }
+        .catch { emit(false) }
 
     val fontSize: Flow<String> = dataStore.data
-        .catch { if (it is IOException) emit(emptyPreferences()) else throw it }
+        .catch { emit(emptyPreferences()) }
         .map { it[KEY_FONT_SIZE] ?: "medium" }
+        .catch { emit("medium") }
 
     val firstLaunch: Flow<Boolean> = dataStore.data
-        .catch { if (it is IOException) emit(emptyPreferences()) else throw it }
+        .catch { emit(emptyPreferences()) }
         .map { it[KEY_FIRST_LAUNCH] ?: true }
+        .catch { emit(true) }
 
     val language: Flow<String> = dataStore.data
-        .catch { if (it is IOException) emit(emptyPreferences()) else throw it }
+        .catch { emit(emptyPreferences()) }
         .map { it[KEY_LANGUAGE] ?: "en" }
+        .catch { emit("en") }
 
     suspend fun setThemeMode(mode: String) {
-        dataStore.edit { it[KEY_THEME_MODE] = mode }
+        runCatching { dataStore.edit { it[KEY_THEME_MODE] = mode } }
     }
 
     suspend fun setDynamicColors(enabled: Boolean) {
-        dataStore.edit { it[KEY_DYNAMIC_COLOR] = enabled }
+        runCatching { dataStore.edit { it[KEY_DYNAMIC_COLOR] = enabled } }
     }
 
     suspend fun setDefaultSound(enabled: Boolean) {
-        dataStore.edit { it[KEY_DEFAULT_SOUND] = enabled }
+        runCatching { dataStore.edit { it[KEY_DEFAULT_SOUND] = enabled } }
     }
 
     suspend fun setDefaultVibration(enabled: Boolean) {
-        dataStore.edit { it[KEY_DEFAULT_VIBRATION] = enabled }
+        runCatching { dataStore.edit { it[KEY_DEFAULT_VIBRATION] = enabled } }
     }
 
     suspend fun setBiometric(enabled: Boolean) {
-        dataStore.edit { it[KEY_BIOMETRIC] = enabled }
+        runCatching { dataStore.edit { it[KEY_BIOMETRIC] = enabled } }
     }
 
     suspend fun setFontSize(size: String) {
-        dataStore.edit { it[KEY_FONT_SIZE] = size }
+        runCatching { dataStore.edit { it[KEY_FONT_SIZE] = size } }
     }
 
     suspend fun setFirstLaunch(value: Boolean) {
-        dataStore.edit { it[KEY_FIRST_LAUNCH] = value }
+        runCatching { dataStore.edit { it[KEY_FIRST_LAUNCH] = value } }
     }
 
     suspend fun setLanguage(code: String) {
-        dataStore.edit { it[KEY_LANGUAGE] = code }
+        runCatching { dataStore.edit { it[KEY_LANGUAGE] = code } }
     }
 }

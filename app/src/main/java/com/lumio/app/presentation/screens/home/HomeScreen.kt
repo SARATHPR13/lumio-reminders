@@ -133,17 +133,37 @@ fun HomeScreen(
             LumioBottomNavBar(navController = navController)
         },
         floatingActionButton = {
-            FloatingActionButton(
-                onClick        = { navController.navigate(Screen.AddReminder.route) },
-                containerColor = MaterialTheme.colorScheme.primary,
-                contentColor   = Color.White,
-                shape          = RoundedCornerShape(16.dp)
+            // Two buttons only — short enough to never reach the bottom nav
+            // bar. AI has its own bottom-nav tab and Voice lives in the top
+            // bar, so Location and Add are the only two that belong here.
+            Column(
+                horizontalAlignment = Alignment.End,
+                verticalArrangement = Arrangement.spacedBy(12.dp)
             ) {
-                Icon(
-                    imageVector        = Icons.Rounded.Add,
-                    contentDescription = "Add reminder",
-                    modifier           = Modifier.size(26.dp)
-                )
+                SmallFloatingActionButton(
+                    onClick        = { navController.navigate(Screen.Location.route) },
+                    containerColor = MaterialTheme.colorScheme.tertiaryContainer,
+                    contentColor   = MaterialTheme.colorScheme.onTertiaryContainer,
+                    shape          = RoundedCornerShape(14.dp)
+                ) {
+                    Icon(
+                        imageVector        = Icons.Rounded.LocationOn,
+                        contentDescription = "Location reminder",
+                        modifier           = Modifier.size(20.dp)
+                    )
+                }
+                FloatingActionButton(
+                    onClick        = { navController.navigate(Screen.AddReminder.route) },
+                    containerColor = MaterialTheme.colorScheme.primary,
+                    contentColor   = Color.White,
+                    shape          = RoundedCornerShape(16.dp)
+                ) {
+                    Icon(
+                        imageVector        = Icons.Rounded.Add,
+                        contentDescription = "Add reminder",
+                        modifier           = Modifier.size(26.dp)
+                    )
+                }
             }
         },
         containerColor = MaterialTheme.colorScheme.background
@@ -153,7 +173,7 @@ fun HomeScreen(
             modifier       = Modifier
                 .fillMaxSize()
                 .padding(padding),
-            contentPadding = PaddingValues(bottom = 100.dp, top = 12.dp)
+            contentPadding = PaddingValues(bottom = 110.dp, top = 12.dp)
         ) {
             item {
                 Row(
