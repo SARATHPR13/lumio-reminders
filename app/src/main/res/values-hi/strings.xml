@@ -24,4 +24,6 @@
     <string name="widget_small_name">लूमियो — छोटा</string>
     <string name="widget_large_name">लूमियो — बड़ा</string>
     <string name="widget_transparent_name">लूमियो — पारदर्शी</string>
+    <string name="nav_health">स्वास्थ्य</string>
+    <string name="nav_ai">AI</string>
 </resources>

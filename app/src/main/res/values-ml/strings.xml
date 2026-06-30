@@ -24,4 +24,6 @@
     <string name="widget_small_name">ലൂമിയോ — ചെറുത്</string>
     <string name="widget_large_name">ലൂമിയോ — വലുത്</string>
     <string name="widget_transparent_name">ലൂമിയോ — സുതാര്യം</string>
+    <string name="nav_health">ആരോഗ്യം</string>
+    <string name="nav_ai">AI</string>
 </resources>

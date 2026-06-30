@@ -24,4 +24,6 @@
     <string name="widget_small_name">லூமியோ — சிறியது</string>
     <string name="widget_large_name">லூமியோ — பெரியது</string>
     <string name="widget_transparent_name">லூமியோ — வெளிப்படையான</string>
+    <string name="nav_health">ஆரோக்கியம்</string>
+    <string name="nav_ai">AI</string>
 </resources>

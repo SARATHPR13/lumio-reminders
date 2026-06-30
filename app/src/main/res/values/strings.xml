@@ -24,4 +24,6 @@
     <string name="widget_small_name">LUMIO Small</string>
     <string name="widget_large_name">LUMIO Large</string>
     <string name="widget_transparent_name">LUMIO Transparent</string>
+    <string name="nav_health">Health</string>
+    <string name="nav_ai">AI</string>
 </resources>

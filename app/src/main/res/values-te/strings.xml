@@ -24,4 +24,6 @@
     <string name="widget_small_name">లూమియో — చిన్నది</string>
     <string name="widget_large_name">లూమియో — పెద్దది</string>
     <string name="widget_transparent_name">లూమియో — పారదర్శకం</string>
+    <string name="nav_health">ఆరోగ్యం</string>
+    <string name="nav_ai">AI</string>
 </resources>
