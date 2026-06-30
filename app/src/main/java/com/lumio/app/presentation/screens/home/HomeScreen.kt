@@ -141,9 +141,21 @@ fun HomeScreen(
                     )
                 }
                 SmallFloatingActionButton(
-                    onClick        = { navController.navigate(Screen.Voice.route) },
+                    onClick        = { navController.navigate(Screen.Location.route) },
                     containerColor = MaterialTheme.colorScheme.tertiaryContainer,
                     contentColor   = MaterialTheme.colorScheme.onTertiaryContainer,
+                    shape          = RoundedCornerShape(14.dp)
+                ) {
+                    Icon(
+                        imageVector        = Icons.Rounded.LocationOn,
+                        contentDescription = "Location",
+                        modifier           = Modifier.size(20.dp)
+                    )
+                }
+                SmallFloatingActionButton(
+                    onClick        = { navController.navigate(Screen.Voice.route) },
+                    containerColor = MaterialTheme.colorScheme.secondaryContainer,
+                    contentColor   = MaterialTheme.colorScheme.onSecondaryContainer,
                     shape          = RoundedCornerShape(14.dp)
                 ) {
                     Icon(

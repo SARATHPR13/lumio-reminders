@@ -23,6 +23,9 @@ import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.navigation.NavController
+import com.lumio.app.ai.ChatMessage
+import com.lumio.app.ai.SuggestedReminder
+import com.lumio.app.ai.TimeSuggestion
 import com.lumio.app.domain.model.Priority
 import com.lumio.app.domain.model.RepeatType
 
@@ -36,8 +39,11 @@ fun AiChatScreen(
     val snackbar   = remember { SnackbarHostState() }
 
     LaunchedEffect(uiState.messages.size) {
-        if (uiState.messages.isNotEmpty())
-            listState.animateScrollToItem(uiState.messages.size - 1)
+        if (uiState.messages.isNotEmpty()) {
+            try {
+                listState.animateScrollToItem(uiState.messages.size - 1)
+            } catch (e: Exception) { }
+        }
     }
 
     LaunchedEffect(uiState.successMessage) {
@@ -56,18 +62,34 @@ fun AiChatScreen(
                         horizontalArrangement = Arrangement.spacedBy(10.dp)
                     ) {
                         Box(
-                            modifier = Modifier.size(36.dp).clip(CircleShape)
-                                .background(Brush.linearGradient(listOf(Color(0xFF1A73E8), Color(0xFF7B2FBE)))),
+                            modifier = Modifier
+                                .size(36.dp)
+                                .clip(CircleShape)
+                                .background(
+                                    Brush.linearGradient(
+                                        listOf(Color(0xFF2563EB), Color(0xFF7C3AED))
+                                    )
+                                ),
                             contentAlignment = Alignment.Center
                         ) {
-                            Text("AI", fontSize = 13.sp, color = Color.White, fontWeight = FontWeight.ExtraBold)
+                            Text(
+                                text       = "AI",
+                                fontSize   = 12.sp,
+                                color      = Color.White,
+                                fontWeight = FontWeight.ExtraBold
+                            )
                         }
                         Column {
-                            Text("LUMIO AI", fontWeight = FontWeight.ExtraBold,
-                                style = MaterialTheme.typography.titleSmall)
-                            Text("Smart Reminder Assistant",
+                            Text(
+                                "LUMIO AI",
+                                fontWeight = FontWeight.ExtraBold,
+                                style      = MaterialTheme.typography.titleSmall
+                            )
+                            Text(
+                                "Smart Reminder Assistant",
                                 style = MaterialTheme.typography.bodySmall,
-                                color = MaterialTheme.colorScheme.onSurfaceVariant)
+                                color = MaterialTheme.colorScheme.onSurfaceVariant
+                            )
                         }
                     }
                 },
@@ -78,7 +100,7 @@ fun AiChatScreen(
                 },
                 actions = {
                     IconButton(onClick = { viewModel.clearConversation() }) {
-                        Icon(Icons.Rounded.RestartAlt, "Clear")
+                        Icon(Icons.Rounded.RestartAlt, "Clear chat")
                     }
                 },
                 colors = TopAppBarDefaults.topAppBarColors(
@@ -89,9 +111,12 @@ fun AiChatScreen(
         snackbarHost   = { SnackbarHost(snackbar) },
         containerColor = MaterialTheme.colorScheme.background
     ) { padding ->
-        Column(modifier = Modifier.fillMaxSize().padding(padding)) {
-
-            // Messages
+        Column(
+            modifier = Modifier
+                .fillMaxSize()
+                .padding(padding)
+        ) {
+            // Chat messages
             LazyColumn(
                 state          = listState,
                 modifier       = Modifier.weight(1f),
@@ -99,218 +124,50 @@ fun AiChatScreen(
                 verticalArrangement = Arrangement.spacedBy(12.dp)
             ) {
                 items(uiState.messages, key = { it.id }) { message ->
-                    Row(
-                        modifier              = Modifier.fillMaxWidth(),
-                        horizontalArrangement = if (message.isUser) Arrangement.End else Arrangement.Start,
-                        verticalAlignment     = Alignment.Bottom
-                    ) {
-                        if (!message.isUser) {
-                            Box(
-                                modifier = Modifier.size(30.dp).clip(CircleShape)
-                                    .background(Brush.linearGradient(listOf(Color(0xFF1A73E8), Color(0xFF7B2FBE)))),
-                                contentAlignment = Alignment.Center
-                            ) { Text("AI", fontSize = 10.sp, color = Color.White, fontWeight = FontWeight.Bold) }
-                            Spacer(Modifier.width(8.dp))
-                        }
-
-                        Column(
-                            modifier            = Modifier.widthIn(max = 280.dp),
-                            horizontalAlignment = if (message.isUser) Alignment.End else Alignment.Start
-                        ) {
-                            Box(
-                                modifier = Modifier
-                                    .clip(RoundedCornerShape(
-                                        topStart    = if (message.isUser) 18.dp else 4.dp,
-                                        topEnd      = if (message.isUser) 4.dp else 18.dp,
-                                        bottomStart = 18.dp, bottomEnd = 18.dp
-                                    ))
-                                    .background(
-                                        if (message.isUser)
-                                            Brush.linearGradient(listOf(Color(0xFF1A73E8), Color(0xFF7B2FBE)))
-                                        else
-                                            Brush.linearGradient(listOf(
-                                                MaterialTheme.colorScheme.surfaceVariant,
-                                                MaterialTheme.colorScheme.surfaceVariant
-                                            ))
-                                    )
-                                    .padding(12.dp)
-                            ) {
-                                Text(
-                                    text       = message.text,
-                                    style      = MaterialTheme.typography.bodyMedium,
-                                    color      = if (message.isUser) Color.White
-                                                 else MaterialTheme.colorScheme.onSurfaceVariant,
-                                    lineHeight = 22.sp
-                                )
-                            }
-
-                            // Reminder preview card
-                            message.suggestedReminder?.let { reminder ->
-                                Spacer(Modifier.height(8.dp))
-                                Card(
-                                    shape  = RoundedCornerShape(14.dp),
-                                    colors = CardDefaults.cardColors(
-                                        containerColor = MaterialTheme.colorScheme.surface
-                                    ),
-                                    elevation = CardDefaults.cardElevation(4.dp)
-                                ) {
-                                    Column(
-                                        modifier            = Modifier.padding(14.dp),
-                                        verticalArrangement = Arrangement.spacedBy(8.dp)
-                                    ) {
-                                        Row(verticalAlignment = Alignment.CenterVertically) {
-                                            Icon(Icons.Rounded.Notifications, null,
-                                                tint     = MaterialTheme.colorScheme.primary,
-                                                modifier = Modifier.size(16.dp))
-                                            Spacer(Modifier.width(6.dp))
-                                            Text("Reminder Preview",
-                                                style      = MaterialTheme.typography.labelMedium,
-                                                fontWeight = FontWeight.Bold,
-                                                color      = MaterialTheme.colorScheme.primary,
-                                                modifier   = Modifier.weight(1f))
-                                            Surface(shape = RoundedCornerShape(20.dp),
-                                                color = Color(0xFF4CAF50).copy(alpha = 0.15f)) {
-                                                Text("${(reminder.confidence * 100).toInt()}%",
-                                                    modifier   = Modifier.padding(horizontal = 6.dp, vertical = 2.dp),
-                                                    fontSize   = 10.sp,
-                                                    color      = Color(0xFF4CAF50),
-                                                    fontWeight = FontWeight.Bold)
-                                            }
-                                        }
-                                        HorizontalDivider()
-                                        Text(reminder.title, fontWeight = FontWeight.Bold,
-                                            style = MaterialTheme.typography.bodyMedium)
-                                        Text("Date: ${reminder.dateDescription}",
-                                            style = MaterialTheme.typography.bodySmall,
-                                            color = MaterialTheme.colorScheme.onSurfaceVariant)
-                                        Text("Time: ${reminder.timeDescription}",
-                                            style = MaterialTheme.typography.bodySmall,
-                                            color = MaterialTheme.colorScheme.onSurfaceVariant)
-                                        if (reminder.repeatType != RepeatType.NONE) {
-                                            Text("Repeats: ${reminder.repeatType.label}",
-                                                style = MaterialTheme.typography.bodySmall,
-                                                color = MaterialTheme.colorScheme.primary)
-                                        }
-                                        reminder.category?.let {
-                                            Text("${it.emoji} ${it.name}",
-                                                style = MaterialTheme.typography.bodySmall,
-                                                color = MaterialTheme.colorScheme.onSurfaceVariant)
-                                        }
-                                        if (reminder.priority != Priority.NONE) {
-                                            Text("${reminder.priority.emoji} ${reminder.priority.label} Priority",
-                                                style = MaterialTheme.typography.bodySmall,
-                                                color = MaterialTheme.colorScheme.onSurfaceVariant)
-                                        }
-                                        HorizontalDivider()
-                                        Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                                            OutlinedButton(
-                                                onClick  = { viewModel.sendQuickMessage("no") },
-                                                modifier = Modifier.weight(1f),
-                                                shape    = RoundedCornerShape(10.dp)
-                                            ) { Text("Cancel") }
-                                            Button(
-                                                onClick  = { viewModel.confirmSaveReminder() },
-                                                modifier = Modifier.weight(2f),
-                                                shape    = RoundedCornerShape(10.dp)
-                                            ) {
-                                                Icon(Icons.Rounded.Check, null, modifier = Modifier.size(14.dp))
-                                                Spacer(Modifier.width(4.dp))
-                                                Text("Save", fontWeight = FontWeight.Bold)
-                                            }
-                                        }
-                                    }
-                                }
-                            }
-                        }
-
-                        if (message.isUser) {
-                            Spacer(Modifier.width(8.dp))
-                            Box(
-                                modifier = Modifier.size(30.dp).clip(CircleShape)
-                                    .background(MaterialTheme.colorScheme.primaryContainer),
-                                contentAlignment = Alignment.Center
-                            ) {
-                                Icon(Icons.Rounded.Person, null,
-                                    tint     = MaterialTheme.colorScheme.onPrimaryContainer,
-                                    modifier = Modifier.size(16.dp))
-                            }
-                        }
-                    }
+                    ChatBubble(
+                        message   = message,
+                        onSave    = { viewModel.confirmSaveReminder() },
+                        onDismiss = { viewModel.sendQuickMessage("no") }
+                    )
                 }
 
-                // Typing indicator
                 if (uiState.isTyping) {
-                    item {
-                        Row(
-                            verticalAlignment     = Alignment.Bottom,
-                            horizontalArrangement = Arrangement.spacedBy(8.dp)
-                        ) {
-                            Box(
-                                modifier = Modifier.size(30.dp).clip(CircleShape)
-                                    .background(Brush.linearGradient(listOf(Color(0xFF1A73E8), Color(0xFF7B2FBE)))),
-                                contentAlignment = Alignment.Center
-                            ) { Text("AI", fontSize = 10.sp, color = Color.White, fontWeight = FontWeight.Bold) }
-
-                            Card(
-                                shape  = RoundedCornerShape(18.dp),
-                                colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant)
-                            ) {
-                                Row(
-                                    modifier              = Modifier.padding(horizontal = 14.dp, vertical = 10.dp),
-                                    horizontalArrangement = Arrangement.spacedBy(4.dp),
-                                    verticalAlignment     = Alignment.CenterVertically
-                                ) {
-                                    repeat(3) { index ->
-                                        val inf = rememberInfiniteTransition(label = "d$index")
-                                        val y by inf.animateFloat(
-                                            initialValue  = 0f,
-                                            targetValue   = -5f,
-                                            animationSpec = infiniteRepeatable(
-                                                animation  = tween(350, delayMillis = index * 120),
-                                                repeatMode = RepeatMode.Reverse
-                                            ),
-                                            label = "d$index"
-                                        )
-                                        Box(
-                                            modifier = Modifier
-                                                .size(7.dp)
-                                                .offset(y = y.dp)
-                                                .clip(CircleShape)
-                                                .background(MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.5f))
-                                        )
-                                    }
-                                }
-                            }
-                        }
-                    }
+                    item { TypingIndicator() }
                 }
             }
 
-            // Quick suggestions shown at start
+            // Quick chips at start
             if (uiState.messages.size <= 1) {
                 LazyRow(
-                    contentPadding        = PaddingValues(horizontal = 16.dp, vertical = 6.dp),
+                    contentPadding        = PaddingValues(horizontal = 16.dp, vertical = 4.dp),
                     horizontalArrangement = Arrangement.spacedBy(8.dp)
                 ) {
-                    val chips = listOf(
-                        "Medicine daily at 8 AM",
-                        "Call mom tomorrow at 6 PM",
+                    val examples = listOf(
+                        "Take medicine daily 8 AM",
+                        "Call mom tomorrow 6 PM",
                         "Every Friday 5 PM report",
-                        "Pay bills on Monday"
+                        "Pay bills Monday"
                     )
-                    items(chips) { chip ->
+                    items(examples) { ex ->
                         SuggestionChip(
-                            onClick = { viewModel.sendQuickMessage("Remind me to $chip") },
-                            label   = { Text(chip, fontSize = 12.sp) }
+                            onClick = {
+                                viewModel.sendQuickMessage("Remind me to $ex")
+                            },
+                            label = { Text(ex, fontSize = 12.sp) }
                         )
                     }
                 }
             }
 
             // Input bar
-            Surface(tonalElevation = 4.dp, modifier = Modifier.fillMaxWidth()) {
+            Surface(
+                tonalElevation = 4.dp,
+                modifier       = Modifier.fillMaxWidth()
+            ) {
                 Row(
-                    modifier              = Modifier.fillMaxWidth().padding(12.dp),
+                    modifier              = Modifier
+                        .fillMaxWidth()
+                        .padding(12.dp),
                     verticalAlignment     = Alignment.CenterVertically,
                     horizontalArrangement = Arrangement.spacedBy(8.dp)
                 ) {
@@ -320,30 +177,357 @@ fun AiChatScreen(
                         placeholder   = { Text("Ask me to set a reminder...") },
                         modifier      = Modifier.weight(1f),
                         shape         = RoundedCornerShape(24.dp),
-                        maxLines      = 3
+                        maxLines      = 3,
+                        colors        = OutlinedTextFieldDefaults.colors(
+                            focusedBorderColor   = MaterialTheme.colorScheme.primary,
+                            unfocusedBorderColor = MaterialTheme.colorScheme.outline.copy(alpha = 0.5f)
+                        )
                     )
                     FloatingActionButton(
-                        onClick        = { if (!uiState.isTyping) viewModel.sendMessage() },
-                        modifier       = Modifier.size(48.dp),
-                        containerColor = if (uiState.isTyping || uiState.inputText.isBlank())
+                        onClick        = {
+                            if (!uiState.isTyping && uiState.inputText.isNotBlank()) {
+                                viewModel.sendMessage()
+                            }
+                        },
+                        modifier       = Modifier.size(52.dp),
+                        containerColor = if (uiState.inputText.isBlank() || uiState.isTyping)
                             MaterialTheme.colorScheme.surfaceVariant
-                        else MaterialTheme.colorScheme.primary,
-                        contentColor   = if (uiState.isTyping || uiState.inputText.isBlank())
+                        else
+                            MaterialTheme.colorScheme.primary,
+                        contentColor   = if (uiState.inputText.isBlank() || uiState.isTyping)
                             MaterialTheme.colorScheme.onSurfaceVariant
-                        else MaterialTheme.colorScheme.onPrimary,
+                        else
+                            Color.White,
                         shape          = CircleShape,
                         elevation      = FloatingActionButtonDefaults.elevation(0.dp)
                     ) {
                         if (uiState.isTyping) {
                             CircularProgressIndicator(
-                                modifier    = Modifier.size(20.dp),
+                                modifier    = Modifier.size(22.dp),
                                 strokeWidth = 2.dp
                             )
                         } else {
-                            Icon(Icons.AutoMirrored.Rounded.Send, "Send",
-                                modifier = Modifier.size(20.dp))
+                            Icon(
+                                Icons.AutoMirrored.Rounded.Send,
+                                "Send",
+                                modifier = Modifier.size(22.dp)
+                            )
                         }
                     }
+                }
+            }
+        }
+    }
+}
+
+@Composable
+private fun ChatBubble(
+    message: ChatMessage,
+    onSave: () -> Unit,
+    onDismiss: () -> Unit
+) {
+    val isUser = message.isUser
+
+    Row(
+        modifier              = Modifier.fillMaxWidth(),
+        horizontalArrangement = if (isUser) Arrangement.End else Arrangement.Start,
+        verticalAlignment     = Alignment.Bottom
+    ) {
+        if (!isUser) {
+            Box(
+                modifier = Modifier
+                    .size(32.dp)
+                    .clip(CircleShape)
+                    .background(
+                        Brush.linearGradient(
+                            listOf(Color(0xFF2563EB), Color(0xFF7C3AED))
+                        )
+                    ),
+                contentAlignment = Alignment.Center
+            ) {
+                Text(
+                    "AI",
+                    fontSize   = 11.sp,
+                    color      = Color.White,
+                    fontWeight = FontWeight.Bold
+                )
+            }
+            Spacer(Modifier.width(8.dp))
+        }
+
+        Column(
+            modifier            = Modifier.widthIn(max = 290.dp),
+            horizontalAlignment = if (isUser) Alignment.End else Alignment.Start
+        ) {
+            Box(
+                modifier = Modifier
+                    .clip(
+                        RoundedCornerShape(
+                            topStart    = if (isUser) 18.dp else 4.dp,
+                            topEnd      = if (isUser) 4.dp else 18.dp,
+                            bottomStart = 18.dp,
+                            bottomEnd   = 18.dp
+                        )
+                    )
+                    .background(
+                        if (isUser)
+                            Brush.linearGradient(
+                                listOf(Color(0xFF2563EB), Color(0xFF7C3AED))
+                            )
+                        else
+                            Brush.linearGradient(
+                                listOf(
+                                    MaterialTheme.colorScheme.surfaceVariant,
+                                    MaterialTheme.colorScheme.surfaceVariant
+                                )
+                            )
+                    )
+                    .padding(12.dp)
+            ) {
+                Text(
+                    text       = message.text,
+                    style      = MaterialTheme.typography.bodyMedium,
+                    color      = if (isUser) Color.White
+                                 else MaterialTheme.colorScheme.onSurfaceVariant,
+                    lineHeight = 22.sp
+                )
+            }
+
+            // Reminder preview card
+            message.suggestedReminder?.let { reminder ->
+                Spacer(Modifier.height(8.dp))
+                ReminderPreview(
+                    reminder  = reminder,
+                    onSave    = onSave,
+                    onDismiss = onDismiss
+                )
+            }
+        }
+
+        if (isUser) {
+            Spacer(Modifier.width(8.dp))
+            Box(
+                modifier = Modifier
+                    .size(32.dp)
+                    .clip(CircleShape)
+                    .background(MaterialTheme.colorScheme.primaryContainer),
+                contentAlignment = Alignment.Center
+            ) {
+                Icon(
+                    Icons.Rounded.Person,
+                    null,
+                    tint     = MaterialTheme.colorScheme.onPrimaryContainer,
+                    modifier = Modifier.size(18.dp)
+                )
+            }
+        }
+    }
+}
+
+@Composable
+private fun ReminderPreview(
+    reminder: SuggestedReminder,
+    onSave: () -> Unit,
+    onDismiss: () -> Unit
+) {
+    Card(
+        shape  = RoundedCornerShape(16.dp),
+        colors = CardDefaults.cardColors(
+            containerColor = MaterialTheme.colorScheme.surface
+        ),
+        elevation = CardDefaults.cardElevation(4.dp)
+    ) {
+        Column(
+            modifier            = Modifier.padding(14.dp),
+            verticalArrangement = Arrangement.spacedBy(8.dp)
+        ) {
+            Row(
+                verticalAlignment     = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.spacedBy(8.dp)
+            ) {
+                Icon(
+                    Icons.Rounded.Notifications,
+                    null,
+                    tint     = MaterialTheme.colorScheme.primary,
+                    modifier = Modifier.size(16.dp)
+                )
+                Text(
+                    "Reminder Preview",
+                    style      = MaterialTheme.typography.labelLarge,
+                    fontWeight = FontWeight.Bold,
+                    color      = MaterialTheme.colorScheme.primary,
+                    modifier   = Modifier.weight(1f)
+                )
+                Surface(
+                    shape = RoundedCornerShape(20.dp),
+                    color = Color(0xFF4CAF50).copy(alpha = 0.15f)
+                ) {
+                    Text(
+                        "${(reminder.confidence * 100).toInt()}%",
+                        modifier   = Modifier.padding(horizontal = 8.dp, vertical = 2.dp),
+                        fontSize   = 10.sp,
+                        color      = Color(0xFF4CAF50),
+                        fontWeight = FontWeight.Bold
+                    )
+                }
+            }
+
+            HorizontalDivider(thickness = 0.5.dp)
+
+            Text(
+                reminder.title,
+                style      = MaterialTheme.typography.titleSmall,
+                fontWeight = FontWeight.Bold
+            )
+
+            Row(
+                verticalAlignment     = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.spacedBy(6.dp)
+            ) {
+                Icon(
+                    Icons.Rounded.CalendarMonth,
+                    null,
+                    modifier = Modifier.size(14.dp),
+                    tint     = MaterialTheme.colorScheme.onSurfaceVariant
+                )
+                Text(
+                    reminder.dateDescription,
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                )
+            }
+
+            Row(
+                verticalAlignment     = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.spacedBy(6.dp)
+            ) {
+                Icon(
+                    Icons.Rounded.Schedule,
+                    null,
+                    modifier = Modifier.size(14.dp),
+                    tint     = MaterialTheme.colorScheme.onSurfaceVariant
+                )
+                Text(
+                    reminder.timeDescription,
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                )
+            }
+
+            if (reminder.repeatType != RepeatType.NONE) {
+                Row(
+                    verticalAlignment     = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.spacedBy(6.dp)
+                ) {
+                    Icon(
+                        Icons.Rounded.Repeat,
+                        null,
+                        modifier = Modifier.size(14.dp),
+                        tint     = MaterialTheme.colorScheme.primary
+                    )
+                    Text(
+                        "Repeats: ${reminder.repeatType.label}",
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.primary
+                    )
+                }
+            }
+
+            reminder.category?.let { cat ->
+                Text(
+                    "${cat.emoji} ${cat.name}",
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                )
+            }
+
+            if (reminder.priority != Priority.NONE) {
+                Text(
+                    "${reminder.priority.emoji} ${reminder.priority.label} Priority",
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                )
+            }
+
+            HorizontalDivider(thickness = 0.5.dp)
+
+            Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                OutlinedButton(
+                    onClick  = onDismiss,
+                    modifier = Modifier.weight(1f),
+                    shape    = RoundedCornerShape(10.dp)
+                ) {
+                    Text("Cancel")
+                }
+                Button(
+                    onClick  = onSave,
+                    modifier = Modifier.weight(2f),
+                    shape    = RoundedCornerShape(10.dp)
+                ) {
+                    Icon(
+                        Icons.Rounded.Check,
+                        null,
+                        modifier = Modifier.size(16.dp)
+                    )
+                    Spacer(Modifier.width(6.dp))
+                    Text("Save Reminder", fontWeight = FontWeight.Bold)
+                }
+            }
+        }
+    }
+}
+
+@Composable
+private fun TypingIndicator() {
+    Row(
+        verticalAlignment     = Alignment.Bottom,
+        horizontalArrangement = Arrangement.spacedBy(8.dp)
+    ) {
+        Box(
+            modifier = Modifier
+                .size(32.dp)
+                .clip(CircleShape)
+                .background(
+                    Brush.linearGradient(
+                        listOf(Color(0xFF2563EB), Color(0xFF7C3AED))
+                    )
+                ),
+            contentAlignment = Alignment.Center
+        ) {
+            Text("AI", fontSize = 11.sp, color = Color.White, fontWeight = FontWeight.Bold)
+        }
+
+        Card(
+            shape  = RoundedCornerShape(18.dp),
+            colors = CardDefaults.cardColors(
+                containerColor = MaterialTheme.colorScheme.surfaceVariant
+            )
+        ) {
+            Row(
+                modifier              = Modifier.padding(horizontal = 16.dp, vertical = 12.dp),
+                horizontalArrangement = Arrangement.spacedBy(4.dp),
+                verticalAlignment     = Alignment.CenterVertically
+            ) {
+                repeat(3) { index ->
+                    val inf = rememberInfiniteTransition(label = "dot_$index")
+                    val y by inf.animateFloat(
+                        initialValue  = 0f,
+                        targetValue   = -5f,
+                        animationSpec = infiniteRepeatable(
+                            animation  = tween(400, delayMillis = index * 130),
+                            repeatMode = RepeatMode.Reverse
+                        ),
+                        label = "dot_$index"
+                    )
+                    Box(
+                        modifier = Modifier
+                            .size(7.dp)
+                            .offset(y = y.dp)
+                            .clip(CircleShape)
+                            .background(
+                                MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.5f)
+                            )
+                    )
                 }
             }
         }
