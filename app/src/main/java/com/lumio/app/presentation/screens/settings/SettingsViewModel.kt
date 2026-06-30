@@ -1,5 +1,7 @@
 package com.lumio.app.presentation.screens.settings
 
+import androidx.appcompat.app.AppCompatDelegate
+import androidx.core.os.LocaleListCompat
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.lumio.app.data.preferences.AppPreferences
@@ -13,7 +15,7 @@ import kotlinx.coroutines.launch
 import javax.inject.Inject
 
 data class SettingsUiState(
-    val themeMode        : String  = "system",
+    val themeMode        : String  = "light",
     val dynamicColors    : Boolean = true,
     val defaultSound     : Boolean = true,
     val defaultVibration : Boolean = true,
@@ -71,8 +73,19 @@ class SettingsViewModel @Inject constructor(
         _uiState.update { it.copy(biometricEnabled = v) }
     }
 
+    /**
+     * Persists the chosen language and applies it at the Android system
+     * level via the per-app language API. This correctly changes the
+     * system-level locale, but does NOT yet change the text shown on
+     * screen, because screens currently use hardcoded English strings
+     * rather than string resources. Full UI translation is a separate,
+     * tracked task.
+     */
     fun setLanguage(code: String) {
         viewModelScope.launch { prefs.setLanguage(code) }
         _uiState.update { it.copy(language = code) }
+        runCatching {
+            AppCompatDelegate.setApplicationLocales(LocaleListCompat.forLanguageTags(code))
+        }
     }
 }

@@ -5,6 +5,7 @@ import android.os.Build
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.rounded.ArrowBack
@@ -26,6 +27,15 @@ import androidx.navigation.NavController
 import com.google.accompanist.permissions.ExperimentalPermissionsApi
 import com.google.accompanist.permissions.rememberMultiplePermissionsState
 import com.google.accompanist.permissions.rememberPermissionState
+import com.google.android.gms.maps.model.CameraPosition
+import com.google.android.gms.maps.model.LatLng
+import com.google.maps.android.compose.GoogleMap
+import com.google.maps.android.compose.MapProperties
+import com.google.maps.android.compose.MapType
+import com.google.maps.android.compose.MapUiSettings
+import com.google.maps.android.compose.Marker
+import com.google.maps.android.compose.rememberCameraPositionState
+import com.google.maps.android.compose.rememberMarkerState
 import com.lumio.app.location.GeofenceTrigger
 
 enum class LocationPickMethod { CHOOSE, GPS, MAP }
@@ -70,7 +80,7 @@ fun LocationPickerScreen(
                         when (pickMethod) {
                             LocationPickMethod.CHOOSE -> "Location Reminder"
                             LocationPickMethod.GPS    -> "Use GPS"
-                            LocationPickMethod.MAP    -> "Enter Coordinates"
+                            LocationPickMethod.MAP    -> "Pick on Map"
                         },
                         fontWeight = FontWeight.Bold
                     )
@@ -106,10 +116,11 @@ fun LocationPickerScreen(
                 uiState   = uiState,
                 viewModel = viewModel
             )
-            LocationPickMethod.MAP -> MapEntryScreen(
-                modifier  = Modifier.padding(padding),
-                uiState   = uiState,
-                viewModel = viewModel
+            LocationPickMethod.MAP -> MapPickerScreen(
+                modifier      = Modifier.padding(padding),
+                uiState       = uiState,
+                viewModel     = viewModel,
+                hasPermission = uiState.hasForegroundPermission
             )
         }
     }
@@ -197,10 +208,10 @@ private fun ChooseScreen(
         item {
             MethodCard(
                 emoji    = "\uD83D\uDDFA\uFE0F",
-                title    = "Enter Coordinates",
-                subtitle = "Get coordinates from Google Maps and enter them",
+                title    = "Pick on Google Map",
+                subtitle = "Tap anywhere on the map to drop a pin",
                 color    = Color(0xFF7C3AED),
-                features = listOf("Any place", "Precise", "Global"),
+                features = listOf("Any place in the world", "Visual", "Drag to adjust"),
                 enabled  = hasForeground && hasBackground,
                 onClick  = onMap
             )
@@ -355,71 +366,135 @@ private fun GpsScreen(modifier: Modifier, uiState: LocationUiState, viewModel: L
 }
 
 @Composable
-private fun MapEntryScreen(modifier: Modifier, uiState: LocationUiState, viewModel: LocationViewModel) {
-    LazyColumn(
-        modifier            = modifier.fillMaxSize(),
-        contentPadding      = PaddingValues(16.dp),
-        verticalArrangement = Arrangement.spacedBy(14.dp)
-    ) {
-        item {
-            Card(
-                shape  = RoundedCornerShape(16.dp),
-                colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.4f))
+private fun MapPickerScreen(
+    modifier: Modifier,
+    uiState: LocationUiState,
+    viewModel: LocationViewModel,
+    hasPermission: Boolean
+) {
+    val indiaCenter = LatLng(20.5937, 78.9629)
+    val startLatLng = when {
+        uiState.latitude != 0.0 -> LatLng(uiState.latitude, uiState.longitude)
+        uiState.currentLocation != null ->
+            LatLng(uiState.currentLocation.latitude, uiState.currentLocation.longitude)
+        else -> indiaCenter
+    }
+
+    val markerState = rememberMarkerState(position = startLatLng)
+    val cameraPositionState = rememberCameraPositionState {
+        position = CameraPosition.fromLatLngZoom(startLatLng, 14f)
+    }
+    var pinPlaced by remember { mutableStateOf(uiState.latitude != 0.0) }
+
+    LaunchedEffect(markerState.position) {
+        viewModel.setLatitude(markerState.position.latitude)
+        viewModel.setLongitude(markerState.position.longitude)
+    }
+
+    Column(modifier = modifier.fillMaxSize()) {
+
+        Box(modifier = Modifier.fillMaxWidth().height(360.dp)) {
+            GoogleMap(
+                modifier            = Modifier.fillMaxSize(),
+                cameraPositionState = cameraPositionState,
+                properties          = MapProperties(
+                    isMyLocationEnabled = hasPermission,
+                    mapType             = MapType.NORMAL
+                ),
+                uiSettings          = MapUiSettings(
+                    myLocationButtonEnabled = false,
+                    zoomControlsEnabled     = false,
+                    compassEnabled          = true,
+                    mapToolbarEnabled       = false
+                ),
+                onMapClick = { latLng ->
+                    markerState.position = latLng
+                    pinPlaced = true
+                }
             ) {
-                Column(modifier = Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                    Text("How to get coordinates:", fontWeight = FontWeight.Bold)
-                    Text("1. Open Google Maps")
-                    Text("2. Long press the location you want")
-                    Text("3. Coordinates appear at the top, e.g. 9.9312, 76.2673")
-                    Text("4. Copy them into the fields below")
+                Marker(
+                    state     = markerState,
+                    title     = uiState.locationName.ifBlank { "Selected location" },
+                    snippet   = "Drag to fine-tune, or tap elsewhere on the map",
+                    draggable = true
+                )
+            }
+
+            if (!pinPlaced) {
+                Card(
+                    modifier = Modifier.align(Alignment.TopCenter).padding(12.dp),
+                    shape    = RoundedCornerShape(14.dp),
+                    colors   = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.inverseSurface)
+                ) {
+                    Row(
+                        modifier              = Modifier.padding(horizontal = 14.dp, vertical = 10.dp),
+                        verticalAlignment     = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.spacedBy(8.dp)
+                    ) {
+                        Text("\uD83D\uDC46", fontSize = 16.sp)
+                        Text(
+                            "Tap the map to drop a pin",
+                            style      = MaterialTheme.typography.bodySmall,
+                            fontWeight = FontWeight.SemiBold,
+                            color      = MaterialTheme.colorScheme.inverseOnSurface
+                        )
+                    }
+                }
+            }
+
+            if (uiState.currentLocation != null) {
+                FloatingActionButton(
+                    onClick        = {
+                        val here = LatLng(uiState.currentLocation.latitude, uiState.currentLocation.longitude)
+                        markerState.position = here
+                        pinPlaced = true
+                    },
+                    modifier       = Modifier.align(Alignment.BottomEnd).padding(12.dp).size(44.dp),
+                    containerColor = MaterialTheme.colorScheme.surface,
+                    contentColor   = Color(0xFF2563EB),
+                    shape          = CircleShape
+                ) {
+                    Icon(Icons.Rounded.MyLocation, null, modifier = Modifier.size(20.dp))
                 }
             }
         }
-        item {
-            OutlinedTextField(
-                value         = uiState.locationName,
-                onValueChange = { viewModel.setLocationName(it) },
-                label         = { Text("Location Name *") },
-                leadingIcon   = { Icon(Icons.Rounded.LocationOn, null) },
-                modifier      = Modifier.fillMaxWidth(),
-                shape         = RoundedCornerShape(14.dp)
-            )
-        }
-        item {
-            Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
-                OutlinedTextField(
-                    value         = if (uiState.latitude == 0.0) "" else String.format("%.6f", uiState.latitude),
-                    onValueChange = { it.toDoubleOrNull()?.let { v -> viewModel.setLatitude(v) } },
-                    label         = { Text("Latitude") },
-                    modifier      = Modifier.weight(1f),
-                    shape         = RoundedCornerShape(14.dp),
-                    singleLine    = true
-                )
-                OutlinedTextField(
-                    value         = if (uiState.longitude == 0.0) "" else String.format("%.6f", uiState.longitude),
-                    onValueChange = { it.toDoubleOrNull()?.let { v -> viewModel.setLongitude(v) } },
-                    label         = { Text("Longitude") },
-                    modifier      = Modifier.weight(1f),
-                    shape         = RoundedCornerShape(14.dp),
-                    singleLine    = true
-                )
+
+        LazyColumn(
+            modifier            = Modifier.weight(1f),
+            contentPadding      = PaddingValues(16.dp),
+            verticalArrangement = Arrangement.spacedBy(14.dp)
+        ) {
+            if (pinPlaced) {
+                item {
+                    Surface(shape = RoundedCornerShape(10.dp), color = Color(0xFF059669).copy(alpha = 0.1f)) {
+                        Row(
+                            modifier              = Modifier.padding(12.dp),
+                            verticalAlignment     = Alignment.CenterVertically,
+                            horizontalArrangement = Arrangement.spacedBy(10.dp)
+                        ) {
+                            Icon(Icons.Rounded.CheckCircle, null, tint = Color(0xFF059669), modifier = Modifier.size(20.dp))
+                            Text(
+                                "Pin dropped at ${String.format("%.5f", uiState.latitude)}, " +
+                                    "${String.format("%.5f", uiState.longitude)}",
+                                style = MaterialTheme.typography.bodySmall,
+                                color = Color(0xFF059669)
+                            )
+                        }
+                    }
+                }
+                item { ReminderForm(uiState = uiState, viewModel = viewModel) }
+            } else {
+                item {
+                    Text(
+                        "Tap a spot on the map above, or drag the pin once it's placed " +
+                            "to fine-tune the exact location.",
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
+                }
             }
+            item { Spacer(Modifier.height(80.dp)) }
         }
-        item {
-            OutlinedButton(
-                onClick  = { viewModel.useCurrentLocation() },
-                modifier = Modifier.fillMaxWidth().height(48.dp),
-                shape    = RoundedCornerShape(12.dp)
-            ) {
-                Icon(Icons.Rounded.MyLocation, null, modifier = Modifier.size(18.dp))
-                Spacer(Modifier.width(8.dp))
-                Text("Or Use My Current GPS Location")
-            }
-        }
-        if (uiState.latitude != 0.0) {
-            item { ReminderForm(uiState = uiState, viewModel = viewModel) }
-        }
-        item { Spacer(Modifier.height(80.dp)) }
     }
 }
 
@@ -428,6 +503,16 @@ private fun ReminderForm(uiState: LocationUiState, viewModel: LocationViewModel)
     Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
         HorizontalDivider()
         Text("Reminder Details", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
+        OutlinedTextField(
+            value         = uiState.locationName,
+            onValueChange = { viewModel.setLocationName(it) },
+            label         = { Text("Location Name *") },
+            placeholder   = { Text("e.g. My Office, Home") },
+            isError       = uiState.locationError,
+            leadingIcon   = { Icon(Icons.Rounded.LocationOn, null) },
+            modifier      = Modifier.fillMaxWidth(),
+            shape         = RoundedCornerShape(14.dp)
+        )
         OutlinedTextField(
             value          = uiState.title,
             onValueChange  = { viewModel.setTitle(it) },

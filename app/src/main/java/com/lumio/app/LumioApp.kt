@@ -8,6 +8,7 @@ import android.graphics.Color
 import android.os.Build
 import androidx.hilt.work.HiltWorkerFactory
 import androidx.work.*
+import com.lumio.app.crash.CrashHandler
 import com.lumio.app.worker.BackupWorker
 import com.lumio.app.worker.ReminderWorker
 import dagger.hilt.android.HiltAndroidApp
@@ -27,6 +28,9 @@ class LumioApp : Application(), Configuration.Provider {
 
     override fun onCreate() {
         super.onCreate()
+        // Installed first, before anything else, so any crash during the
+        // rest of app startup is still captured.
+        CrashHandler.install(this)
         createNotificationChannels()
         schedulePeriodicWork()
     }
@@ -66,23 +70,19 @@ class LumioApp : Application(), Configuration.Provider {
             val manager = getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
 
             val reminderChannel = NotificationChannel(
-                CHANNEL_REMINDERS,
-                "Reminders",
-                NotificationManager.IMPORTANCE_HIGH
+                CHANNEL_REMINDERS, "Reminders", NotificationManager.IMPORTANCE_HIGH
             ).apply {
-                description  = "Your scheduled reminders"
+                description = "Your scheduled reminders"
                 enableVibration(true)
                 enableLights(true)
-                lightColor   = Color.parseColor("#FF1A73E8")
+                lightColor = Color.parseColor("#FF1A73E8")
                 setShowBadge(true)
             }
 
             val alarmChannel = NotificationChannel(
-                CHANNEL_ALARMS,
-                "Priority Alarms",
-                NotificationManager.IMPORTANCE_MAX
+                CHANNEL_ALARMS, "Priority Alarms", NotificationManager.IMPORTANCE_MAX
             ).apply {
-                description  = "High-priority alarms"
+                description = "High-priority alarms"
                 enableVibration(true)
                 enableLights(true)
                 setBypassDnd(true)
@@ -90,19 +90,15 @@ class LumioApp : Application(), Configuration.Provider {
             }
 
             val silentChannel = NotificationChannel(
-                CHANNEL_SILENT,
-                "Silent Reminders",
-                NotificationManager.IMPORTANCE_LOW
+                CHANNEL_SILENT, "Silent Reminders", NotificationManager.IMPORTANCE_LOW
             ).apply {
-                description  = "Silent notifications"
+                description = "Silent notifications"
                 enableVibration(false)
                 setSound(null, null)
                 setShowBadge(false)
             }
 
-            manager.createNotificationChannels(
-                listOf(reminderChannel, alarmChannel, silentChannel)
-            )
+            manager.createNotificationChannels(listOf(reminderChannel, alarmChannel, silentChannel))
         }
     }
 
