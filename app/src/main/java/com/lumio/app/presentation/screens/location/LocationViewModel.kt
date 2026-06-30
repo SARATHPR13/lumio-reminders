@@ -13,8 +13,8 @@ import com.lumio.app.domain.model.RepeatType
 import com.lumio.app.domain.repository.ReminderRepository
 import com.lumio.app.location.GeofenceManager
 import com.lumio.app.location.GeofenceTrigger
-import com.lumio.app.location.LocationReminder
 import com.lumio.app.location.LocationPresets
+import com.lumio.app.location.LocationReminder
 import com.lumio.app.location.LocationReminderIdea
 import dagger.hilt.android.lifecycle.HiltViewModel
 import dagger.hilt.android.qualifiers.ApplicationContext
@@ -27,21 +27,22 @@ import java.util.UUID
 import javax.inject.Inject
 
 data class LocationUiState(
-    val title: String                  = "",
-    val description: String            = "",
-    val locationName: String           = "",
-    val latitude: Double               = 0.0,
-    val longitude: Double              = 0.0,
-    val radiusMeters: Float            = 200f,
-    val triggerType: GeofenceTrigger   = GeofenceTrigger.ENTER,
-    val hasLocationPermission: Boolean = false,
-    val currentLocation: Location?     = null,
-    val isSaving: Boolean              = false,
-    val isSaved: Boolean               = false,
-    val errorMessage: String?          = null,
-    val successMessage: String?        = null,
-    val titleError: Boolean            = false,
-    val locationError: Boolean         = false,
+    val title: String                    = "",
+    val description: String              = "",
+    val locationName: String             = "",
+    val latitude: Double                 = 0.0,
+    val longitude: Double                = 0.0,
+    val radiusMeters: Float              = 200f,
+    val triggerType: GeofenceTrigger     = GeofenceTrigger.ENTER,
+    val hasForegroundPermission: Boolean = false,
+    val hasBackgroundPermission: Boolean = false,
+    val currentLocation: Location?       = null,
+    val isSaving: Boolean                = false,
+    val isSaved: Boolean                 = false,
+    val errorMessage: String?            = null,
+    val successMessage: String?          = null,
+    val titleError: Boolean              = false,
+    val locationError: Boolean           = false,
     val presets: List<LocationReminderIdea> = LocationPresets.reminderIdeas
 )
 
@@ -62,17 +63,21 @@ class LocationViewModel @Inject constructor(
     init { checkPermissions() }
 
     fun checkPermissions() {
-        val hasPermission = geofenceManager.hasLocationPermission()
-        _uiState.update { it.copy(hasLocationPermission = hasPermission) }
-        if (hasPermission) getCurrentLocation()
+        val foreground = geofenceManager.hasForegroundLocationPermission()
+        val background = geofenceManager.hasBackgroundLocationPermission()
+        _uiState.update {
+            it.copy(
+                hasForegroundPermission = foreground,
+                hasBackgroundPermission = background
+            )
+        }
+        if (foreground) getCurrentLocation()
     }
 
     private fun getCurrentLocation() {
         try {
             fusedLocationClient.lastLocation.addOnSuccessListener { location ->
-                location?.let { loc ->
-                    _uiState.update { it.copy(currentLocation = loc) }
-                }
+                location?.let { loc -> _uiState.update { it.copy(currentLocation = loc) } }
             }
         } catch (e: SecurityException) { }
     }
@@ -98,9 +103,7 @@ class LocationViewModel @Inject constructor(
             }
         } else {
             getCurrentLocation()
-            _uiState.update {
-                it.copy(errorMessage = "Getting your location — please wait and try again")
-            }
+            _uiState.update { it.copy(errorMessage = "Getting your location, please wait and try again.") }
         }
     }
 
@@ -118,6 +121,7 @@ class LocationViewModel @Inject constructor(
 
     fun saveLocationReminder() {
         val s = _uiState.value
+
         if (s.title.isBlank()) {
             _uiState.update { it.copy(titleError = true) }
             return
@@ -127,9 +131,11 @@ class LocationViewModel @Inject constructor(
             return
         }
         if (s.latitude == 0.0 && s.longitude == 0.0) {
-            _uiState.update {
-                it.copy(errorMessage = "Please set a location first")
-            }
+            _uiState.update { it.copy(errorMessage = "Please set a location first.") }
+            return
+        }
+        if (!s.hasForegroundPermission) {
+            _uiState.update { it.copy(errorMessage = "Location permission is required before saving.") }
             return
         }
 
@@ -139,13 +145,13 @@ class LocationViewModel @Inject constructor(
             val locationCategory = Category(
                 id       = 12L,
                 name     = "Location",
-                emoji    = "📍",
+                emoji    = "\uD83D\uDCCD",
                 colorHex = "#FF1A73E8"
             )
 
             val reminder = Reminder(
                 title            = "${s.triggerType.emoji} ${s.title}",
-                description      = "${s.description}\n📍 ${s.locationName} — ${s.triggerType.label}",
+                description      = "${s.description}\n${locationCategory.emoji} ${s.locationName} \u2014 ${s.triggerType.label}",
                 dateTimeMillis   = System.currentTimeMillis() + 3_600_000L,
                 priority         = Priority.HIGH,
                 category         = locationCategory,
@@ -168,16 +174,24 @@ class LocationViewModel @Inject constructor(
                 locationName = s.locationName
             )
 
-            if (s.hasLocationPermission) {
-                geofenceManager.addGeofence(locationReminder)
-            }
-
-            _uiState.update {
-                it.copy(
-                    isSaving       = false,
-                    isSaved        = true,
-                    successMessage = "📍 Location reminder set for ${s.locationName}!"
-                )
+            geofenceManager.addGeofence(locationReminder) { success, error ->
+                if (success) {
+                    _uiState.update {
+                        it.copy(
+                            isSaving       = false,
+                            isSaved        = true,
+                            successMessage = "Location reminder set for ${s.locationName}."
+                        )
+                    }
+                } else {
+                    _uiState.update {
+                        it.copy(
+                            isSaving     = false,
+                            isSaved      = true,
+                            errorMessage = error ?: "Saved, but the location trigger could not be registered."
+                        )
+                    }
+                }
             }
         }
     }

@@ -33,7 +33,7 @@ class AppPreferences @Inject constructor(
 
     val themeMode: Flow<String> = dataStore.data
         .catch { if (it is IOException) emit(emptyPreferences()) else throw it }
-        .map { it[KEY_THEME_MODE] ?: "system" }
+        .map { it[KEY_THEME_MODE] ?: "light" }
 
     val dynamicColors: Flow<Boolean> = dataStore.data
         .catch { if (it is IOException) emit(emptyPreferences()) else throw it }

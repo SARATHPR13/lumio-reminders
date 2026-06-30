@@ -2,6 +2,7 @@ package com.lumio.app.presentation.screens.ai
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.lumio.app.ai.AiParseResult
 import com.lumio.app.ai.ChatMessage
 import com.lumio.app.ai.DuplicateDetector
 import com.lumio.app.ai.NaturalLanguageProcessor
@@ -17,10 +18,10 @@ import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
-import kotlinx.coroutines.flow.catch
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
+import java.util.Calendar
 import javax.inject.Inject
 
 data class AiChatUiState(
@@ -46,12 +47,15 @@ class AiChatViewModel @Inject constructor(
         addWelcomeMessage()
     }
 
+    private fun fallbackResult(message: String): AiParseResult =
+        AiParseResult(understood = false, response = message)
+
     private fun addWelcomeMessage() {
         _uiState.update {
             it.copy(
                 messages = listOf(
                     ChatMessage(
-                        text   = "Hi! I am LUMIO AI\n\nTell me what you need to remember!\n\nExample: Remind me to take medicine every day at 8 AM",
+                        text   = "Hi! I am LUMIO AI.\n\nTell me what you need to remember and I will create the reminder for you.\n\nExample: Remind me to take medicine every day at 8 AM",
                         isUser = false
                     )
                 )
@@ -78,7 +82,7 @@ class AiChatViewModel @Inject constructor(
 
         viewModelScope.launch {
             try {
-                delay(800)
+                delay(600)
 
                 val pending = _uiState.value.pendingReminder
                 if (pending != null) {
@@ -86,35 +90,34 @@ class AiChatViewModel @Inject constructor(
                     return@launch
                 }
 
-                val result = NaturalLanguageProcessor.process(text)
+                val result = runCatching { NaturalLanguageProcessor.process(text) }
+                    .getOrElse {
+                        fallbackResult("I could not understand that. Try: \"Remind me to call mom tomorrow at 5 PM\".")
+                    }
 
-                val allReminders = try {
+                val allReminders = runCatching {
                     reminderRepository.getAllReminders().first()
-                } catch (e: Exception) {
-                    emptyList()
-                }
+                }.getOrDefault(emptyList())
 
-                val suggestions: List<TimeSuggestion> = if (result.suggestedReminder != null) {
-                    try {
-                        SmartTimeSuggester.getSuggestions(
-                            result.suggestedReminder.title,
-                            allReminders
-                        )
-                    } catch (e: Exception) { emptyList() }
-                } else emptyList()
+                val suggestions: List<TimeSuggestion> =
+                    if (result.suggestedReminder != null) {
+                        runCatching {
+                            SmartTimeSuggester.getSuggestions(result.suggestedReminder.title, allReminders)
+                        }.getOrDefault(emptyList())
+                    } else emptyList()
 
                 var response = result.response
                 if (result.suggestedReminder != null && allReminders.isNotEmpty()) {
-                    try {
+                    runCatching {
                         val newReminder = Reminder(
                             title          = result.suggestedReminder.title,
                             dateTimeMillis = result.suggestedReminder.dateTimeMillis
                         )
                         val dupCheck = DuplicateDetector.checkDuplicate(newReminder, allReminders)
                         if (dupCheck.isDuplicate) {
-                            response += "\n\nNote: Similar reminder already exists: \"${dupCheck.similarReminder?.title}\""
+                            response += "\n\nNote: a similar reminder already exists: \"${dupCheck.similarReminder?.title}\"."
                         }
-                    } catch (e: Exception) { }
+                    }
                 }
 
                 val aiMsg = ChatMessage(
@@ -134,14 +137,11 @@ class AiChatViewModel @Inject constructor(
                 }
             } catch (e: Exception) {
                 val errorMsg = ChatMessage(
-                    text   = "Sorry, something went wrong. Please try again.",
+                    text   = "Sorry, something went wrong on my end. Please try rephrasing that.",
                     isUser = false
                 )
                 _uiState.update { state ->
-                    state.copy(
-                        messages = state.messages + errorMsg,
-                        isTyping = false
-                    )
+                    state.copy(messages = state.messages + errorMsg, isTyping = false)
                 }
             }
         }
@@ -155,10 +155,9 @@ class AiChatViewModel @Inject constructor(
             lower.contains("add") || lower.contains("confirm") -> {
                 saveReminder(pending)
             }
-            lower.contains("no")  || lower.contains("cancel") ||
-            lower.contains("skip") -> {
+            lower.contains("no") || lower.contains("cancel") || lower.contains("skip") -> {
                 val aiMsg = ChatMessage(
-                    text   = "Cancelled! Reminder not saved. Anything else?",
+                    text   = "No problem, that reminder was not saved. Anything else?",
                     isUser = false
                 )
                 _uiState.update { state ->
@@ -171,8 +170,9 @@ class AiChatViewModel @Inject constructor(
                 }
             }
             else -> {
-                val result = NaturalLanguageProcessor.process(text)
-                val aiMsg  = ChatMessage(
+                val result = runCatching { NaturalLanguageProcessor.process(text) }
+                    .getOrElse { fallbackResult("Sorry, I did not catch that.") }
+                val aiMsg = ChatMessage(
                     text              = result.response,
                     isUser            = false,
                     suggestedReminder = result.suggestedReminder
@@ -195,14 +195,11 @@ class AiChatViewModel @Inject constructor(
                 saveReminder(pending)
             } catch (e: Exception) {
                 val errorMsg = ChatMessage(
-                    text   = "Failed to save reminder. Please try again.",
+                    text   = "I could not save that reminder. Please try again.",
                     isUser = false
                 )
                 _uiState.update { state ->
-                    state.copy(
-                        messages = state.messages + errorMsg,
-                        isTyping = false
-                    )
+                    state.copy(messages = state.messages + errorMsg, isTyping = false)
                 }
             }
         }
@@ -220,13 +217,13 @@ class AiChatViewModel @Inject constructor(
             vibrationEnabled = true
         )
         val id = reminderRepository.insertReminder(reminder)
-        alarmScheduler.schedule(reminder.copy(id = id))
+        runCatching { alarmScheduler.schedule(reminder.copy(id = id)) }
 
         val repeatInfo = if (suggested.repeatType != RepeatType.NONE)
             "\nRepeats: ${suggested.repeatType.label}" else ""
 
         val aiMsg = ChatMessage(
-            text   = "Reminder saved successfully!\n\n${suggested.title}\n${suggested.dateDescription} at ${suggested.timeDescription}$repeatInfo\n\nAnything else?",
+            text   = "Reminder saved.\n\n${suggested.title}\n${suggested.dateDescription} at ${suggested.timeDescription}$repeatInfo\n\nAnything else?",
             isUser = false
         )
         _uiState.update { state ->
@@ -235,25 +232,25 @@ class AiChatViewModel @Inject constructor(
                 isTyping            = false,
                 pendingReminder     = null,
                 showTimeSuggestions = false,
-                successMessage      = "Reminder saved!"
+                successMessage      = "Reminder saved"
             )
         }
     }
 
     fun useTimeSuggestion(suggestion: TimeSuggestion) {
         val pending = _uiState.value.pendingReminder ?: return
-        val cal     = java.util.Calendar.getInstance().apply {
+        val cal = Calendar.getInstance().apply {
             timeInMillis = pending.dateTimeMillis
-            set(java.util.Calendar.HOUR_OF_DAY, suggestion.hour)
-            set(java.util.Calendar.MINUTE, suggestion.minute)
-            set(java.util.Calendar.SECOND, 0)
+            set(Calendar.HOUR_OF_DAY, suggestion.hour)
+            set(Calendar.MINUTE, suggestion.minute)
+            set(Calendar.SECOND, 0)
         }
         val updated = pending.copy(
             dateTimeMillis  = cal.timeInMillis,
             timeDescription = suggestion.label
         )
         val aiMsg = ChatMessage(
-            text              = "Time updated to ${suggestion.label}\n\nShall I save the reminder?",
+            text              = "Time updated to ${suggestion.label} for \"${updated.title}\". Shall I save it?",
             isUser            = false,
             suggestedReminder = updated
         )

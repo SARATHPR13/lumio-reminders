@@ -31,8 +31,8 @@ fun HomeScreen(
     navController: NavController,
     viewModel: HomeViewModel = hiltViewModel()
 ) {
-    val uiState   by viewModel.uiState.collectAsStateWithLifecycle()
-    val listState  = rememberLazyListState()
+    val uiState  by viewModel.uiState.collectAsStateWithLifecycle()
+    val listState = rememberLazyListState()
 
     Scaffold(
         topBar = {
@@ -72,21 +72,29 @@ fun HomeScreen(
                             )
                         }
                     }
+                    IconButton(onClick = { navController.navigate(Screen.Voice.route) }) {
+                        Icon(
+                            imageVector        = Icons.Rounded.Mic,
+                            contentDescription = "Add by voice",
+                            tint               = MaterialTheme.colorScheme.onSurfaceVariant
+                        )
+                    }
                     IconButton(onClick = { navController.navigate(Screen.Search.route) }) {
                         Icon(
-                            Icons.Rounded.Search,
+                            imageVector        = Icons.Rounded.Search,
                             contentDescription = "Search",
-                            tint = MaterialTheme.colorScheme.onSurfaceVariant
+                            tint               = MaterialTheme.colorScheme.onSurfaceVariant
                         )
                     }
                     IconButton(onClick = { navController.navigate(Screen.Settings.route) }) {
                         Icon(
-                            Icons.Rounded.Settings,
+                            imageVector        = Icons.Rounded.Settings,
                             contentDescription = "Settings",
-                            tint = MaterialTheme.colorScheme.onSurfaceVariant
+                            tint               = MaterialTheme.colorScheme.onSurfaceVariant
                         )
                     }
                 }
+
                 LazyRow(
                     contentPadding        = PaddingValues(horizontal = 16.dp, vertical = 4.dp),
                     horizontalArrangement = Arrangement.spacedBy(8.dp)
@@ -113,6 +121,7 @@ fun HomeScreen(
                         )
                     }
                 }
+
                 Spacer(modifier = Modifier.height(4.dp))
                 HorizontalDivider(
                     color     = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.4f),
@@ -124,58 +133,17 @@ fun HomeScreen(
             LumioBottomNavBar(navController = navController)
         },
         floatingActionButton = {
-            Column(
-                horizontalAlignment = Alignment.End,
-                verticalArrangement = Arrangement.spacedBy(12.dp)
+            FloatingActionButton(
+                onClick        = { navController.navigate(Screen.AddReminder.route) },
+                containerColor = MaterialTheme.colorScheme.primary,
+                contentColor   = Color.White,
+                shape          = RoundedCornerShape(16.dp)
             ) {
-                SmallFloatingActionButton(
-                    onClick        = { navController.navigate(Screen.AiChat.route) },
-                    containerColor = MaterialTheme.colorScheme.secondaryContainer,
-                    contentColor   = MaterialTheme.colorScheme.onSecondaryContainer,
-                    shape          = RoundedCornerShape(14.dp)
-                ) {
-                    Icon(
-                        imageVector        = Icons.Rounded.AutoAwesome,
-                        contentDescription = "AI",
-                        modifier           = Modifier.size(20.dp)
-                    )
-                }
-                SmallFloatingActionButton(
-                    onClick        = { navController.navigate(Screen.Location.route) },
-                    containerColor = MaterialTheme.colorScheme.tertiaryContainer,
-                    contentColor   = MaterialTheme.colorScheme.onTertiaryContainer,
-                    shape          = RoundedCornerShape(14.dp)
-                ) {
-                    Icon(
-                        imageVector        = Icons.Rounded.LocationOn,
-                        contentDescription = "Location",
-                        modifier           = Modifier.size(20.dp)
-                    )
-                }
-                SmallFloatingActionButton(
-                    onClick        = { navController.navigate(Screen.Voice.route) },
-                    containerColor = MaterialTheme.colorScheme.secondaryContainer,
-                    contentColor   = MaterialTheme.colorScheme.onSecondaryContainer,
-                    shape          = RoundedCornerShape(14.dp)
-                ) {
-                    Icon(
-                        imageVector        = Icons.Rounded.Mic,
-                        contentDescription = "Voice",
-                        modifier           = Modifier.size(20.dp)
-                    )
-                }
-                FloatingActionButton(
-                    onClick        = { navController.navigate(Screen.AddReminder.route) },
-                    containerColor = MaterialTheme.colorScheme.primary,
-                    contentColor   = Color.White,
-                    shape          = RoundedCornerShape(16.dp)
-                ) {
-                    Icon(
-                        imageVector        = Icons.Rounded.Add,
-                        contentDescription = "Add",
-                        modifier           = Modifier.size(26.dp)
-                    )
-                }
+                Icon(
+                    imageVector        = Icons.Rounded.Add,
+                    contentDescription = "Add reminder",
+                    modifier           = Modifier.size(26.dp)
+                )
             }
         },
         containerColor = MaterialTheme.colorScheme.background
@@ -185,7 +153,7 @@ fun HomeScreen(
             modifier       = Modifier
                 .fillMaxSize()
                 .padding(padding),
-            contentPadding = PaddingValues(bottom = 160.dp, top = 12.dp)
+            contentPadding = PaddingValues(bottom = 100.dp, top = 12.dp)
         ) {
             item {
                 Row(
@@ -347,11 +315,11 @@ private fun EmptyState(filter: HomeFilter) {
         ) {
             Text(
                 text     = when (filter) {
-                    HomeFilter.TODAY     -> "🎉"
-                    HomeFilter.COMPLETED -> "✅"
-                    HomeFilter.PRIORITY  -> "⚡"
-                    HomeFilter.UPCOMING  -> "⏰"
-                    HomeFilter.ALL       -> "📋"
+                    HomeFilter.TODAY     -> "\uD83C\uDF89"
+                    HomeFilter.COMPLETED -> "\u2705"
+                    HomeFilter.PRIORITY  -> "\u26A1"
+                    HomeFilter.UPCOMING  -> "\u23F0"
+                    HomeFilter.ALL       -> "\uD83D\uDCCB"
                 },
                 fontSize = 52.sp
             )

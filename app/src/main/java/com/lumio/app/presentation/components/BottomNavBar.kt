@@ -30,7 +30,7 @@ private data class NavItem(
 fun LumioBottomNavBar(navController: NavController) {
     val items = listOf(
         NavItem(Screen.Home,     "Home",     Icons.Rounded.Home),
-        NavItem(Screen.Calendar, "Calendar", Icons.Rounded.CalendarMonth),
+        NavItem(Screen.Calendar, "Calendar", Icons.Rounded.DateRange),
         NavItem(Screen.Health,   "Health",   Icons.Rounded.Favorite),
         NavItem(Screen.AiChat,   "AI",       Icons.Rounded.AutoAwesome),
         NavItem(Screen.Settings, "Settings", Icons.Rounded.Settings)

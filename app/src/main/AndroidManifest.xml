@@ -1,7 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <manifest xmlns:android="http://schemas.android.com/apk/res/android">
 
-    <!-- Core permissions -->
     <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
     <uses-permission android:name="android.permission.RECEIVE_BOOT_COMPLETED" />
     <uses-permission android:name="android.permission.SCHEDULE_EXACT_ALARM" />
@@ -15,7 +14,6 @@
     <uses-permission android:name="android.permission.FOREGROUND_SERVICE" />
     <uses-permission android:name="android.permission.INTERNET" />
 
-    <!-- Location permissions -->
     <uses-permission android:name="android.permission.ACCESS_FINE_LOCATION" />
     <uses-permission android:name="android.permission.ACCESS_COARSE_LOCATION" />
     <uses-permission android:name="android.permission.ACCESS_BACKGROUND_LOCATION" />
@@ -32,7 +30,6 @@
         android:dataExtractionRules="@xml/data_extraction_rules"
         android:fullBackupContent="@xml/backup_rules">
 
-        <!-- Main Activity -->
         <activity
             android:name=".MainActivity"
             android:exported="true"
@@ -44,7 +41,6 @@
             </intent-filter>
         </activity>
 
-        <!-- Boot Receiver -->
         <receiver android:name=".receiver.BootReceiver" android:exported="true">
             <intent-filter android:priority="999">
                 <action android:name="android.intent.action.BOOT_COMPLETED" />
@@ -52,14 +48,12 @@
             </intent-filter>
         </receiver>
 
-        <!-- Alarm Receiver -->
         <receiver android:name=".receiver.AlarmReceiver" android:exported="true">
             <intent-filter>
                 <action android:name="com.lumio.app.REMINDER_ALARM" />
             </intent-filter>
         </receiver>
 
-        <!-- Notification Action Receiver -->
         <receiver android:name=".receiver.NotificationActionReceiver"
             android:exported="false">
             <intent-filter>
@@ -70,17 +64,18 @@
             </intent-filter>
         </receiver>
 
-        <!-- Geofence Receiver -->
+        <!-- No android:permission attribute here. Adding one (e.g. RECEIVE_BOOT_COMPLETED,
+             which was here before) silently blocks Play Services from ever delivering the
+             geofence-transition broadcast, since the location service does not hold that
+             permission. That was the root cause of location reminders never firing. -->
         <receiver
             android:name=".location.GeofenceBroadcastReceiver"
-            android:exported="true"
-            android:permission="android.permission.RECEIVE_BOOT_COMPLETED">
+            android:exported="true">
             <intent-filter>
                 <action android:name="com.lumio.app.ACTION_GEOFENCE_EVENT" />
             </intent-filter>
         </receiver>
 
-        <!-- Small Widget -->
         <receiver android:name=".widget.SmallWidgetProvider"
             android:exported="true" android:label="@string/widget_small_name">
             <intent-filter>
@@ -90,7 +85,6 @@
                 android:resource="@xml/small_widget_info" />
         </receiver>
 
-        <!-- Large Widget -->
         <receiver android:name=".widget.LargeWidgetProvider"
             android:exported="true" android:label="@string/widget_large_name">
             <intent-filter>
@@ -100,7 +94,6 @@
                 android:resource="@xml/large_widget_info" />
         </receiver>
 
-        <!-- Transparent Widget -->
         <receiver android:name=".widget.TransparentWidgetProvider"
             android:exported="true" android:label="@string/widget_transparent_name">
             <intent-filter>
@@ -110,16 +103,14 @@
                 android:resource="@xml/transparent_widget_info" />
         </receiver>
 
-        <!-- Google Maps API Key -->
-        <meta-data
-            android:name="com.google.android.geo.API_KEY"
-            android:value="@string/google_maps_key" />
-
-        <!-- Large Widget List Service -->
         <service
             android:name=".widget.LargeWidgetService"
             android:exported="false"
             android:permission="android.permission.BIND_REMOTEVIEWS" />
+
+        <meta-data
+            android:name="com.google.android.geo.API_KEY"
+            android:value="@string/google_maps_key" />
 
     </application>
 </manifest>

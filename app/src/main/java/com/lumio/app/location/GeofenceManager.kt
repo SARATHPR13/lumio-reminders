@@ -23,7 +23,9 @@ class GeofenceManager @Inject constructor(
         LocationServices.getGeofencingClient(context)
 
     private val geofencePendingIntent: PendingIntent by lazy {
-        val intent = Intent(context, GeofenceBroadcastReceiver::class.java)
+        val intent = Intent(context, GeofenceBroadcastReceiver::class.java).apply {
+            action = "com.lumio.app.ACTION_GEOFENCE_EVENT"
+        }
         PendingIntent.getBroadcast(
             context,
             0,
@@ -32,22 +34,39 @@ class GeofenceManager @Inject constructor(
         )
     }
 
-    fun hasLocationPermission(): Boolean {
-        val fine = ContextCompat.checkSelfPermission(
+    fun hasForegroundLocationPermission(): Boolean =
+        ContextCompat.checkSelfPermission(
             context, Manifest.permission.ACCESS_FINE_LOCATION
         ) == PackageManager.PERMISSION_GRANTED
 
-        val background = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
+    fun hasBackgroundLocationPermission(): Boolean =
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
             ContextCompat.checkSelfPermission(
                 context, Manifest.permission.ACCESS_BACKGROUND_LOCATION
             ) == PackageManager.PERMISSION_GRANTED
-        } else true
+        } else {
+            true
+        }
 
-        return fine && background
-    }
+    fun hasLocationPermission(): Boolean =
+        hasForegroundLocationPermission() && hasBackgroundLocationPermission()
 
-    fun addGeofence(locationReminder: LocationReminder) {
-        if (!hasLocationPermission()) return
+    fun addGeofence(
+        locationReminder: LocationReminder,
+        onResult: (success: Boolean, errorMessage: String?) -> Unit
+    ) {
+        if (!hasForegroundLocationPermission()) {
+            onResult(false, "Location permission is required.")
+            return
+        }
+        if (!hasBackgroundLocationPermission()) {
+            onResult(
+                false,
+                "Background location (\"Allow all the time\") is required " +
+                    "for this reminder to trigger while LUMIO is closed."
+            )
+            return
+        }
 
         val transitionTypes = when (locationReminder.triggerType) {
             GeofenceTrigger.ENTER -> Geofence.GEOFENCE_TRANSITION_ENTER
@@ -75,8 +94,12 @@ class GeofenceManager @Inject constructor(
 
         try {
             geofencingClient.addGeofences(request, geofencePendingIntent)
+                .addOnSuccessListener { onResult(true, null) }
+                .addOnFailureListener { e ->
+                    onResult(false, e.message ?: "Failed to register the location trigger.")
+                }
         } catch (e: SecurityException) {
-            // Permission not granted
+            onResult(false, "Location permission was denied by the system.")
         }
     }
 

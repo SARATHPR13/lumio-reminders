@@ -27,7 +27,7 @@ class MainActivity : ComponentActivity() {
         super.onCreate(savedInstanceState)
 
         setContent {
-            val themeMode by appPreferences.themeMode.collectAsState(initial = "system")
+            val themeMode by appPreferences.themeMode.collectAsState(initial = "light")
 
             LumioTheme(
                 darkTheme    = when (themeMode) {
