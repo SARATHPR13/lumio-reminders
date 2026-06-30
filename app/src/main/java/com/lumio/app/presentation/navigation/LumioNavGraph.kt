@@ -14,6 +14,7 @@ import androidx.navigation.compose.rememberNavController
 import androidx.navigation.navArgument
 import com.lumio.app.data.preferences.AppPreferences
 import com.lumio.app.presentation.screens.add.AddReminderScreen
+import com.lumio.app.presentation.screens.ai.AiChatScreen
 import com.lumio.app.presentation.screens.calendar.CalendarScreen
 import com.lumio.app.presentation.screens.categories.CategoriesScreen
 import com.lumio.app.presentation.screens.detail.ReminderDetailScreen
@@ -24,9 +25,8 @@ import com.lumio.app.presentation.screens.onboarding.OnboardingScreen
 import com.lumio.app.presentation.screens.search.SearchScreen
 import com.lumio.app.presentation.screens.settings.SettingsScreen
 import com.lumio.app.presentation.screens.stats.StatsScreen
-import com.lumio.app.presentation.screens.weather.WeatherScreen
-import com.lumio.app.presentation.screens.ai.AiChatScreen
 import com.lumio.app.presentation.screens.voice.VoiceScreen
+import com.lumio.app.presentation.screens.weather.WeatherScreen
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -53,20 +53,21 @@ class NavViewModel @Inject constructor(
 }
 
 @Composable
-fun LumioNavGraph(
-    navController: NavHostController = rememberNavController()
-) {
+fun LumioNavGraph(navController: NavHostController = rememberNavController()) {
     val navViewModel: NavViewModel = hiltViewModel()
     val isFirstLaunch by navViewModel.firstLaunch.collectAsState()
-    val startDestination = if (isFirstLaunch) Screen.Onboarding.route
-                          else Screen.Home.route
+    val start = if (isFirstLaunch) Screen.Onboarding.route else Screen.Home.route
 
-    NavHost(
-        navController    = navController,
-        startDestination = startDestination
-    ) {
+    // Every route defined in Screen.kt MUST have a matching composable()
+    // entry below. A route that compiles fine (Screen.kt is just objects
+    // holding strings) but is never registered here will not be caught by
+    // the Kotlin compiler at all -- it only fails at runtime, the moment
+    // navController.navigate(...) is actually called for that route. That
+    // silent gap is exactly what caused the AI crash: "ai_chat" compiled
+    // fine everywhere it was referenced, but had no registration here.
 
-        // ── Onboarding ────────────────────────────────
+    NavHost(navController = navController, startDestination = start) {
+
         composable(Screen.Onboarding.route) {
             OnboardingScreen(
                 onFinish = {
@@ -78,59 +79,56 @@ fun LumioNavGraph(
             )
         }
 
-        // ── Home ──────────────────────────────────────
         composable(Screen.Home.route) {
             HomeScreen(navController = navController)
         }
 
-        // ── Add Reminder ──────────────────────────────
         composable(Screen.AddReminder.route) {
             AddReminderScreen(navController = navController)
         }
 
-        // ── Calendar ──────────────────────────────────
         composable(Screen.Calendar.route) {
             CalendarScreen(navController = navController)
         }
 
-        // ── Categories ────────────────────────────────
         composable(Screen.Categories.route) {
             CategoriesScreen(navController = navController)
         }
 
-        // ── Settings ──────────────────────────────────
         composable(Screen.Settings.route) {
             SettingsScreen(navController = navController)
         }
 
-        // ── Search ────────────────────────────────────
         composable(Screen.Search.route) {
             SearchScreen(navController = navController)
         }
 
-        // ── Voice ─────────────────────────────────────
         composable(Screen.Voice.route) {
             VoiceScreen(navController = navController)
         }
 
-        // ── Health ────────────────────────────────────
         composable(Screen.Health.route) {
             HealthScreen(navController = navController)
         }
 
-        // ── Stats ─────────────────────────────────────
         composable(Screen.Stats.route) {
             StatsScreen(navController = navController)
         }
 
-        // ── Location (Both GPS + Map) ─────────────────
         composable(Screen.Location.route) {
             LocationPickerScreen(navController = navController)
         }
 
-        // ── Reminder Detail ───────────────────────────
+        composable(Screen.Weather.route) {
+            WeatherScreen(navController = navController)
+        }
+
+        composable(Screen.AiChat.route) {
+            AiChatScreen(navController = navController)
+        }
+
         composable(
-            route = Screen.ReminderDetail.route,
+            route     = Screen.ReminderDetail.route,
             arguments = listOf(
                 navArgument("reminderId") {
                     type         = NavType.LongType
@@ -141,9 +139,8 @@ fun LumioNavGraph(
             ReminderDetailScreen(navController = navController)
         }
 
-        // ── Edit Reminder ─────────────────────────────
         composable(
-            route = Screen.EditReminder.route,
+            route     = Screen.EditReminder.route,
             arguments = listOf(
                 navArgument("reminderId") {
                     type         = NavType.LongType
@@ -154,9 +151,8 @@ fun LumioNavGraph(
             AddReminderScreen(navController = navController)
         }
 
-        // ── Category Detail ───────────────────────────
         composable(
-            route = Screen.CategoryDetail.route,
+            route     = Screen.CategoryDetail.route,
             arguments = listOf(
                 navArgument("categoryId") {
                     type         = NavType.LongType
