@@ -1,4 +1,4 @@
-package com.lumio.app.presentation.screens.home
+Xpackage com.lumio.app.presentation.screens.home
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
