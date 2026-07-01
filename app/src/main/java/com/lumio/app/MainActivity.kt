@@ -29,10 +29,6 @@ class MainActivity : ComponentActivity() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        // This was accidentally dropped in an earlier rewrite. Without it,
-        // status bar / inset handling becomes inconsistent across Android
-        // versions, which is what was cutting off the top of Home and
-        // other screens.
         enableEdgeToEdge()
 
         val pendingCrash = CrashHandler.getLastCrash(this)
@@ -41,20 +37,21 @@ class MainActivity : ComponentActivity() {
             val themeMode by appPreferences.themeMode.collectAsState(initial = "light")
 
             LumioTheme(
-                darkTheme    = when (themeMode) {
+                darkTheme = when (themeMode) {
                     "dark", "amoled" -> true
-                    "light"          -> false
-                    else             -> isSystemInDarkTheme()
+                    "light" -> false
+                    else -> isSystemInDarkTheme()
                 },
-                amoledTheme  = themeMode == "amoled",
-                dynamicColor = true
+                amoledTheme = themeMode == "amoled",
+                // Redesign: use the Clear Morning brand palette, not wallpaper colors.
+                dynamicColor = false
             ) {
                 Surface(
                     modifier = Modifier.fillMaxSize(),
-                    color    = MaterialTheme.colorScheme.background
+                    color = MaterialTheme.colorScheme.background
                 ) {
-                    var crashTrace  by remember { mutableStateOf(pendingCrash) }
-                    var showSplash  by remember { mutableStateOf(crashTrace == null) }
+                    var crashTrace by remember { mutableStateOf(pendingCrash) }
+                    var showSplash by remember { mutableStateOf(crashTrace == null) }
 
                     LaunchedEffect(Unit) {
                         if (crashTrace == null) {
@@ -65,7 +62,7 @@ class MainActivity : ComponentActivity() {
 
                     when {
                         crashTrace != null -> CrashReportScreen(
-                            trace      = crashTrace ?: "",
+                            trace = crashTrace ?: "",
                             onContinue = { crashTrace = null }
                         )
                         showSplash -> SplashScreen()
