@@ -1,6 +1,5 @@
 package com.lumio.app.presentation.screens.home
 
-import androidx.compose.animation.core.*
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.*
@@ -25,7 +24,6 @@ import androidx.navigation.NavController
 import com.lumio.app.presentation.components.LumioBottomNavBar
 import com.lumio.app.presentation.components.ReminderCard
 import com.lumio.app.presentation.navigation.Screen
-import java.util.Calendar
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -33,89 +31,50 @@ fun HomeScreen(
     navController: NavController,
     viewModel: HomeViewModel = hiltViewModel()
 ) {
-    val uiState   by viewModel.uiState.collectAsStateWithLifecycle()
-    val listState  = rememberLazyListState()
+    val uiState by viewModel.uiState.collectAsStateWithLifecycle()
+    val listState = rememberLazyListState()
 
     Scaffold(
         topBar = {
+            // Branding "LUMIO" bar removed. This paints off-white behind the
+            // status bar (background is applied BEFORE statusBarsPadding) so
+            // there is no dark strip at the top, then shows the filter chips.
             Column(
                 modifier = Modifier
                     .fillMaxWidth()
                     .background(MaterialTheme.colorScheme.background)
+                    .statusBarsPadding()
             ) {
-                Row(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .statusBarsPadding()
-                        .padding(horizontal = 20.dp, vertical = 8.dp),
-                    verticalAlignment = Alignment.CenterVertically
-                ) {
-                    Column(Modifier.weight(1f)) {
-                        Text(
-                            text  = getGreeting(),
-                            style = MaterialTheme.typography.bodySmall,
-                            color = MaterialTheme.colorScheme.onSurfaceVariant
-                        )
-                        Row(
-                            verticalAlignment     = Alignment.CenterVertically,
-                            horizontalArrangement = Arrangement.spacedBy(6.dp)
-                        ) {
-                            Text(
-                                text       = "LUMIO",
-                                style      = MaterialTheme.typography.headlineSmall,
-                                fontWeight = FontWeight.Black,
-                                color      = MaterialTheme.colorScheme.primary
-                            )
-                            Box(
-                                modifier = Modifier
-                                    .size(6.dp)
-                                    .clip(RoundedCornerShape(3.dp))
-                                    .background(MaterialTheme.colorScheme.secondary)
-                            )
-                        }
-                    }
-                    Row(horizontalArrangement = Arrangement.spacedBy(4.dp)) {
-                        IconButton(onClick = { navController.navigate(Screen.Search.route) }) {
-                            Icon(Icons.Rounded.Search, "Search",
-                                tint = MaterialTheme.colorScheme.onSurfaceVariant)
-                        }
-                        IconButton(onClick = { navController.navigate(Screen.Settings.route) }) {
-                            Icon(Icons.Rounded.Settings, "Settings",
-                                tint = MaterialTheme.colorScheme.onSurfaceVariant)
-                        }
-                    }
-                }
-
+                Spacer(Modifier.height(8.dp))
                 LazyRow(
-                    contentPadding        = PaddingValues(horizontal = 16.dp, vertical = 4.dp),
+                    contentPadding = PaddingValues(horizontal = 16.dp, vertical = 4.dp),
                     horizontalArrangement = Arrangement.spacedBy(8.dp)
                 ) {
                     items(HomeFilter.values()) { filter ->
                         val selected = uiState.activeFilter == filter
                         FilterChip(
                             selected = selected,
-                            onClick  = { viewModel.setFilter(filter) },
-                            label    = {
+                            onClick = { viewModel.setFilter(filter) },
+                            label = {
                                 Text(
-                                    text       = "${filter.emoji} ${filter.label}",
+                                    text = "${filter.emoji} ${filter.label}",
                                     fontWeight = if (selected) FontWeight.Bold else FontWeight.Medium,
-                                    fontSize   = 13.sp
+                                    fontSize = 13.sp
                                 )
                             },
                             colors = FilterChipDefaults.filterChipColors(
                                 selectedContainerColor = MaterialTheme.colorScheme.primary,
-                                selectedLabelColor     = Color.White,
-                                containerColor         = MaterialTheme.colorScheme.surface,
-                                labelColor             = MaterialTheme.colorScheme.onSurface
+                                selectedLabelColor = Color.White,
+                                containerColor = MaterialTheme.colorScheme.surface,
+                                labelColor = MaterialTheme.colorScheme.onSurface
                             ),
-                            shape  = RoundedCornerShape(12.dp)
+                            shape = RoundedCornerShape(12.dp)
                         )
                     }
                 }
-
                 Spacer(Modifier.height(4.dp))
                 HorizontalDivider(
-                    color     = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.4f),
+                    color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.4f),
                     thickness = 0.5.dp
                 )
             }
@@ -127,30 +86,28 @@ fun HomeScreen(
                 verticalArrangement = Arrangement.spacedBy(10.dp)
             ) {
                 SmallFloatingActionButton(
-                    onClick        = { navController.navigate(Screen.AiChat.route) },
+                    onClick = { navController.navigate(Screen.AiChat.route) },
                     containerColor = MaterialTheme.colorScheme.secondaryContainer,
-                    contentColor   = MaterialTheme.colorScheme.onSecondaryContainer,
-                    shape          = RoundedCornerShape(14.dp),
-                    modifier       = Modifier.size(44.dp)
+                    contentColor = MaterialTheme.colorScheme.onSecondaryContainer,
+                    shape = RoundedCornerShape(14.dp),
+                    modifier = Modifier.size(44.dp)
                 ) {
-                    Icon(Icons.Rounded.AutoAwesome, "AI",
-                        modifier = Modifier.size(20.dp))
+                    Icon(Icons.Rounded.AutoAwesome, "AI", modifier = Modifier.size(20.dp))
                 }
                 SmallFloatingActionButton(
-                    onClick        = { navController.navigate(Screen.Voice.route) },
+                    onClick = { navController.navigate(Screen.Voice.route) },
                     containerColor = MaterialTheme.colorScheme.tertiaryContainer,
-                    contentColor   = MaterialTheme.colorScheme.onTertiaryContainer,
-                    shape          = RoundedCornerShape(14.dp),
-                    modifier       = Modifier.size(44.dp)
+                    contentColor = MaterialTheme.colorScheme.onTertiaryContainer,
+                    shape = RoundedCornerShape(14.dp),
+                    modifier = Modifier.size(44.dp)
                 ) {
-                    Icon(Icons.Rounded.Mic, "Voice",
-                        modifier = Modifier.size(20.dp))
+                    Icon(Icons.Rounded.Mic, "Voice", modifier = Modifier.size(20.dp))
                 }
                 ExtendedFloatingActionButton(
-                    onClick        = { navController.navigate(Screen.AddReminder.route) },
+                    onClick = { navController.navigate(Screen.AddReminder.route) },
                     containerColor = MaterialTheme.colorScheme.primary,
-                    contentColor   = Color.White,
-                    shape          = RoundedCornerShape(18.dp),
+                    contentColor = Color.White,
+                    shape = RoundedCornerShape(18.dp),
                     icon = { Icon(Icons.Rounded.Add, "Add") },
                     text = { Text("Add Reminder", fontWeight = FontWeight.Bold) }
                 )
@@ -159,14 +116,12 @@ fun HomeScreen(
         containerColor = MaterialTheme.colorScheme.background
     ) { padding ->
         LazyColumn(
-            state          = listState,
-            modifier       = Modifier
+            state = listState,
+            modifier = Modifier
                 .fillMaxSize()
                 .padding(padding),
             contentPadding = PaddingValues(bottom = 160.dp, top = 12.dp)
         ) {
-
-            // Stats Row
             item {
                 Row(
                     modifier = Modifier
@@ -174,36 +129,17 @@ fun HomeScreen(
                         .padding(horizontal = 16.dp),
                     horizontalArrangement = Arrangement.spacedBy(10.dp)
                 ) {
-                    StatCard(
-                        label    = "Today",
-                        value    = "${uiState.todayCount}",
-                        icon     = Icons.Rounded.WbSunny,
-                        color1   = Color(0xFF2563EB),
-                        color2   = Color(0xFF7C3AED),
-                        modifier = Modifier.weight(1f)
-                    )
-                    StatCard(
-                        label    = "Active",
-                        value    = "${uiState.totalCount}",
-                        icon     = Icons.AutoMirrored.Rounded.List,
-                        color1   = Color(0xFF7C3AED),
-                        color2   = Color(0xFFDB2777),
-                        modifier = Modifier.weight(1f)
-                    )
-                    StatCard(
-                        label    = "Done",
-                        value    = "${uiState.completedCount}",
-                        icon     = Icons.Rounded.TaskAlt,
-                        color1   = Color(0xFF059669),
-                        color2   = Color(0xFF0D9488),
-                        modifier = Modifier.weight(1f)
-                    )
+                    StatCard("Today", "${uiState.todayCount}", Icons.Rounded.WbSunny,
+                        Color(0xFF2563EB), Color(0xFF7C3AED), Modifier.weight(1f))
+                    StatCard("Active", "${uiState.totalCount}", Icons.AutoMirrored.Rounded.List,
+                        Color(0xFF7C3AED), Color(0xFFDB2777), Modifier.weight(1f))
+                    StatCard("Done", "${uiState.completedCount}", Icons.Rounded.TaskAlt,
+                        Color(0xFF059669), Color(0xFF0D9488), Modifier.weight(1f))
                 }
             }
 
             item { Spacer(Modifier.height(20.dp)) }
 
-            // Section header
             item {
                 Row(
                     modifier = Modifier
@@ -213,13 +149,13 @@ fun HomeScreen(
                 ) {
                     Column(Modifier.weight(1f)) {
                         Text(
-                            text       = uiState.activeFilter.label,
-                            style      = MaterialTheme.typography.titleMedium,
+                            text = uiState.activeFilter.label,
+                            style = MaterialTheme.typography.titleMedium,
                             fontWeight = FontWeight.Bold
                         )
                         if (uiState.displayedReminders.isNotEmpty()) {
                             Text(
-                                text  = "${uiState.displayedReminders.size} reminders",
+                                text = "${uiState.displayedReminders.size} reminders",
                                 style = MaterialTheme.typography.bodySmall,
                                 color = MaterialTheme.colorScheme.onSurfaceVariant
                             )
@@ -228,7 +164,7 @@ fun HomeScreen(
                     if (uiState.completedCount > 0) {
                         TextButton(onClick = { viewModel.deleteAllCompleted() }) {
                             Text(
-                                text  = "Clear done",
+                                text = "Clear done",
                                 style = MaterialTheme.typography.labelMedium,
                                 color = MaterialTheme.colorScheme.onSurfaceVariant
                             )
@@ -237,27 +173,19 @@ fun HomeScreen(
                 }
             }
 
-            // Empty state
             if (uiState.displayedReminders.isEmpty()) {
-                item {
-                    EmptyState(filter = uiState.activeFilter)
-                }
+                item { EmptyState(filter = uiState.activeFilter) }
             }
 
-            // Reminder list
             items(
                 items = uiState.displayedReminders,
-                key   = { it.id }
+                key = { it.id }
             ) { reminder ->
                 ReminderCard(
-                    reminder   = reminder,
-                    onTap      = {
-                        navController.navigate(
-                            Screen.ReminderDetail.createRoute(reminder.id)
-                        )
-                    },
+                    reminder = reminder,
+                    onTap = { navController.navigate(Screen.ReminderDetail.createRoute(reminder.id)) },
                     onComplete = { viewModel.toggleComplete(reminder.id, it) },
-                    onDelete   = { viewModel.deleteReminder(reminder.id) }
+                    onDelete = { viewModel.deleteReminder(reminder.id) }
                 )
             }
         }
@@ -274,8 +202,8 @@ private fun StatCard(
     modifier: Modifier = Modifier
 ) {
     Card(
-        modifier  = modifier.height(96.dp),
-        shape     = RoundedCornerShape(20.dp),
+        modifier = modifier.height(96.dp),
+        shape = RoundedCornerShape(20.dp),
         elevation = CardDefaults.cardElevation(defaultElevation = 0.dp)
     ) {
         Box(
@@ -285,27 +213,16 @@ private fun StatCard(
                 .padding(14.dp)
         ) {
             Column(
-                modifier            = Modifier.fillMaxSize(),
+                modifier = Modifier.fillMaxSize(),
                 verticalArrangement = Arrangement.SpaceBetween
             ) {
-                Icon(
-                    imageVector        = icon,
-                    contentDescription = null,
-                    tint               = Color.White.copy(alpha = 0.8f),
-                    modifier           = Modifier.size(18.dp)
-                )
+                Icon(icon, null, tint = Color.White.copy(alpha = 0.8f),
+                    modifier = Modifier.size(18.dp))
                 Column {
-                    Text(
-                        text       = value,
-                        style      = MaterialTheme.typography.headlineMedium,
-                        fontWeight = FontWeight.Black,
-                        color      = Color.White
-                    )
-                    Text(
-                        text  = label,
-                        style = MaterialTheme.typography.labelSmall,
-                        color = Color.White.copy(alpha = 0.75f)
-                    )
+                    Text(value, style = MaterialTheme.typography.headlineMedium,
+                        fontWeight = FontWeight.Black, color = Color.White)
+                    Text(label, style = MaterialTheme.typography.labelSmall,
+                        color = Color.White.copy(alpha = 0.75f))
                 }
             }
         }
@@ -315,26 +232,26 @@ private fun StatCard(
 @Composable
 private fun EmptyState(filter: HomeFilter) {
     val emoji = when (filter) {
-        HomeFilter.TODAY     -> "🎉"
+        HomeFilter.TODAY -> "🎉"
         HomeFilter.COMPLETED -> "✅"
-        HomeFilter.PRIORITY  -> "⚡"
-        HomeFilter.UPCOMING  -> "⏰"
-        HomeFilter.ALL       -> "📋"
+        HomeFilter.PRIORITY -> "⚡"
+        HomeFilter.UPCOMING -> "⏰"
+        HomeFilter.ALL -> "📋"
     }
     val title = when (filter) {
-        HomeFilter.TODAY     -> "All clear today!"
+        HomeFilter.TODAY -> "All clear today!"
         HomeFilter.COMPLETED -> "Nothing completed yet"
-        HomeFilter.PRIORITY  -> "No priority items"
-        HomeFilter.UPCOMING  -> "Nothing upcoming"
-        HomeFilter.ALL       -> "Your list is empty"
+        HomeFilter.PRIORITY -> "No priority items"
+        HomeFilter.UPCOMING -> "Nothing upcoming"
+        HomeFilter.ALL -> "Your list is empty"
     }
     val subtitle = when (filter) {
         HomeFilter.TODAY -> "Enjoy your free day! Have a great one."
-        else             -> "Tap + to create your first reminder"
+        else -> "Tap + to create your first reminder"
     }
 
     Column(
-        modifier            = Modifier
+        modifier = Modifier
             .fillMaxWidth()
             .padding(32.dp),
         horizontalAlignment = Alignment.CenterHorizontally,
@@ -349,53 +266,24 @@ private fun EmptyState(filter: HomeFilter) {
         ) {
             Text(text = emoji, fontSize = 52.sp)
         }
-
-        Text(
-            text       = title,
-            style      = MaterialTheme.typography.titleMedium,
-            fontWeight = FontWeight.Bold
-        )
-
-        Text(
-            text  = subtitle,
-            style = MaterialTheme.typography.bodyMedium,
-            color = MaterialTheme.colorScheme.onSurfaceVariant
-        )
-
+        Text(title, style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
+        Text(subtitle, style = MaterialTheme.typography.bodyMedium,
+            color = MaterialTheme.colorScheme.onSurfaceVariant)
         Surface(
             shape = RoundedCornerShape(14.dp),
             color = MaterialTheme.colorScheme.surfaceVariant
         ) {
             Row(
-                modifier              = Modifier.padding(
-                    horizontal = 16.dp,
-                    vertical   = 10.dp
-                ),
-                verticalAlignment     = Alignment.CenterVertically,
+                modifier = Modifier.padding(horizontal = 16.dp, vertical = 10.dp),
+                verticalAlignment = Alignment.CenterVertically,
                 horizontalArrangement = Arrangement.spacedBy(8.dp)
             ) {
-                Icon(
-                    Icons.Rounded.Mic,
-                    contentDescription = null,
-                    tint               = MaterialTheme.colorScheme.primary,
-                    modifier           = Modifier.size(16.dp)
-                )
-                Text(
-                    text  = "Try voice: Remind me tomorrow at 5 PM",
+                Icon(Icons.Rounded.Mic, null, tint = MaterialTheme.colorScheme.primary,
+                    modifier = Modifier.size(16.dp))
+                Text("Try voice: Remind me tomorrow at 5 PM",
                     style = MaterialTheme.typography.bodySmall,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant
-                )
+                    color = MaterialTheme.colorScheme.onSurfaceVariant)
             }
         }
-    }
-}
-
-private fun getGreeting(): String {
-    val hour = Calendar.getInstance().get(Calendar.HOUR_OF_DAY)
-    return when (hour) {
-        in 5..11  -> "Good morning"
-        in 12..16 -> "Good afternoon"
-        in 17..20 -> "Good evening"
-        else      -> "Good night"
     }
 }
