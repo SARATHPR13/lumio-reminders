@@ -126,7 +126,7 @@ fun HomeScreen(
                     Box(
                         modifier = Modifier
                             .align(Alignment.CenterEnd)
-                            .fillMaxHeight()
+                            .height(40.dp)
                             .width(32.dp)
                             .background(
                                 Brush.horizontalGradient(
