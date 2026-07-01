@@ -1,4 +1,4 @@
-Xpackage com.lumio.app.presentation.screens.home
+package com.lumio.app.presentation.screens.home
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
@@ -95,48 +95,34 @@ fun HomeScreen(
                     }
                 }
 
-                Box {
-                    LazyRow(
-                        contentPadding = PaddingValues(start = 16.dp, end = 40.dp, top = 4.dp, bottom = 4.dp),
-                        horizontalArrangement = Arrangement.spacedBy(8.dp)
-                    ) {
-                        items(HomeFilter.values()) { filter ->
-                            val selected = uiState.activeFilter == filter
-                            FilterChip(
-                                selected = selected,
-                                onClick = { viewModel.setFilter(filter) },
-                                label = {
-                                    Text(
-                                        text = "${filter.emoji} ${filter.label}",
-                                        fontWeight = if (selected) FontWeight.Bold else FontWeight.Normal,
-                                        fontSize = 13.sp
-                                    )
-                                },
-                                colors = FilterChipDefaults.filterChipColors(
-                                    selectedContainerColor = MaterialTheme.colorScheme.primary,
-                                    selectedLabelColor = Color.White,
-                                    containerColor = MaterialTheme.colorScheme.surface,
-                                    labelColor = MaterialTheme.colorScheme.onSurface
-                                ),
-                                shape = RoundedCornerShape(12.dp)
-                            )
-                        }
-                    }
-
-                    Box(
-                        modifier = Modifier
-                            .align(Alignment.CenterEnd)
-                            .height(40.dp)
-                            .width(32.dp)
-                            .background(
-                                Brush.horizontalGradient(
-                                    colors = listOf(
-                                        MaterialTheme.colorScheme.background.copy(alpha = 0f),
-                                        MaterialTheme.colorScheme.background
-                                    )
+                // Plain scrollable row. Extra trailing padding (end = 32.dp)
+                // means the last chip always has breathing room instead of
+                // sitting flush against the screen edge.
+                LazyRow(
+                    contentPadding = PaddingValues(start = 16.dp, end = 32.dp, top = 4.dp, bottom = 4.dp),
+                    horizontalArrangement = Arrangement.spacedBy(8.dp)
+                ) {
+                    items(HomeFilter.values()) { filter ->
+                        val selected = uiState.activeFilter == filter
+                        FilterChip(
+                            selected = selected,
+                            onClick = { viewModel.setFilter(filter) },
+                            label = {
+                                Text(
+                                    text = "${filter.emoji} ${filter.label}",
+                                    fontWeight = if (selected) FontWeight.Bold else FontWeight.Normal,
+                                    fontSize = 13.sp
                                 )
-                            )
-                    )
+                            },
+                            colors = FilterChipDefaults.filterChipColors(
+                                selectedContainerColor = MaterialTheme.colorScheme.primary,
+                                selectedLabelColor = Color.White,
+                                containerColor = MaterialTheme.colorScheme.surface,
+                                labelColor = MaterialTheme.colorScheme.onSurface
+                            ),
+                            shape = RoundedCornerShape(12.dp)
+                        )
+                    }
                 }
 
                 Spacer(modifier = Modifier.height(4.dp))
