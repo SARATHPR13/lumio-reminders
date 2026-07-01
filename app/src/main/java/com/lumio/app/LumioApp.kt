@@ -28,8 +28,6 @@ class LumioApp : Application(), Configuration.Provider {
 
     override fun onCreate() {
         super.onCreate()
-        // Installed first, before anything else, so any crash during the
-        // rest of app startup is still captured.
         CrashHandler.install(this)
         createNotificationChannels()
         schedulePeriodicWork()
@@ -70,29 +68,29 @@ class LumioApp : Application(), Configuration.Provider {
             val manager = getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
 
             val reminderChannel = NotificationChannel(
-                CHANNEL_REMINDERS, "Reminders", NotificationManager.IMPORTANCE_HIGH
+                CHANNEL_REMINDERS, getString(R.string.channel_reminders_name), NotificationManager.IMPORTANCE_HIGH
             ).apply {
-                description = "Your scheduled reminders"
-                enableVibration(true)
+                description = getString(R.string.channel_reminders_desc)
+                enableVibration(false)
                 enableLights(true)
                 lightColor = Color.parseColor("#FF1A73E8")
                 setShowBadge(true)
             }
 
             val alarmChannel = NotificationChannel(
-                CHANNEL_ALARMS, "Priority Alarms", NotificationManager.IMPORTANCE_MAX
+                CHANNEL_ALARMS, getString(R.string.channel_alarms_name), NotificationManager.IMPORTANCE_MAX
             ).apply {
-                description = "High-priority alarms"
-                enableVibration(true)
+                description = getString(R.string.channel_alarms_desc)
+                enableVibration(false)
                 enableLights(true)
                 setBypassDnd(true)
                 setShowBadge(true)
             }
 
             val silentChannel = NotificationChannel(
-                CHANNEL_SILENT, "Silent Reminders", NotificationManager.IMPORTANCE_LOW
+                CHANNEL_SILENT, getString(R.string.channel_silent_name), NotificationManager.IMPORTANCE_LOW
             ).apply {
-                description = "Silent notifications"
+                description = getString(R.string.channel_silent_desc)
                 enableVibration(false)
                 setSound(null, null)
                 setShowBadge(false)
@@ -103,15 +101,15 @@ class LumioApp : Application(), Configuration.Provider {
     }
 
     companion object {
-        const val CHANNEL_REMINDERS     = "lumio_reminders_channel"
-        const val CHANNEL_ALARMS        = "lumio_alarms_channel"
-        const val CHANNEL_SILENT        = "lumio_silent_channel"
-        const val ACTION_SNOOZE_5       = "com.lumio.app.ACTION_SNOOZE_5"
-        const val ACTION_SNOOZE_15      = "com.lumio.app.ACTION_SNOOZE_15"
-        const val ACTION_SNOOZE_30      = "com.lumio.app.ACTION_SNOOZE_30"
-        const val ACTION_MARK_DONE      = "com.lumio.app.ACTION_MARK_DONE"
-        const val EXTRA_REMINDER_ID     = "reminder_id"
+        const val CHANNEL_REMINDERS = "lumio_reminders_channel"
+        const val CHANNEL_ALARMS = "lumio_alarms_channel"
+        const val CHANNEL_SILENT = "lumio_silent_channel"
+        const val ACTION_SNOOZE_5 = "com.lumio.app.ACTION_SNOOZE_5"
+        const val ACTION_SNOOZE_15 = "com.lumio.app.ACTION_SNOOZE_15"
+        const val ACTION_SNOOZE_30 = "com.lumio.app.ACTION_SNOOZE_30"
+        const val ACTION_MARK_DONE = "com.lumio.app.ACTION_MARK_DONE"
+        const val EXTRA_REMINDER_ID = "reminder_id"
         const val ACTION_REMINDER_ALARM = "com.lumio.app.REMINDER_ALARM"
-        const val DATABASE_NAME         = "lumio_database"
+        const val DATABASE_NAME = "lumio_database"
     }
 }

@@ -8,6 +8,7 @@ import android.graphics.Color
 import androidx.core.app.NotificationCompat
 import com.lumio.app.LumioApp
 import com.lumio.app.MainActivity
+import com.lumio.app.R
 import com.lumio.app.domain.model.Priority
 import com.lumio.app.receiver.NotificationActionReceiver
 import dagger.hilt.android.qualifiers.ApplicationContext
@@ -28,11 +29,11 @@ class NotificationHelper @Inject constructor(
         priority: Priority,
         soundEnabled: Boolean
     ) {
-        val openPending    = buildOpenIntent(reminderId)
+        val openPending = buildOpenIntent(reminderId)
         val snooze5Pending = buildSnoozeIntent(reminderId, 5)
-        val snooze15Pending= buildSnoozeIntent(reminderId, 15)
-        val snooze30Pending= buildSnoozeIntent(reminderId, 30)
-        val donePending    = buildDoneIntent(reminderId)
+        val snooze15Pending = buildSnoozeIntent(reminderId, 15)
+        val snooze30Pending = buildSnoozeIntent(reminderId, 30)
+        val donePending = buildDoneIntent(reminderId)
 
         val channelId = when (priority) {
             Priority.URGENT,
@@ -42,20 +43,22 @@ class NotificationHelper @Inject constructor(
 
         val notifPriority = when (priority) {
             Priority.URGENT -> NotificationCompat.PRIORITY_MAX
-            Priority.HIGH   -> NotificationCompat.PRIORITY_HIGH
+            Priority.HIGH -> NotificationCompat.PRIORITY_HIGH
             Priority.MEDIUM -> NotificationCompat.PRIORITY_DEFAULT
-            else            -> NotificationCompat.PRIORITY_LOW
+            else -> NotificationCompat.PRIORITY_LOW
         }
 
         val priorityColor = when (priority) {
             Priority.URGENT -> Color.parseColor("#FFD32F2F")
-            Priority.HIGH   -> Color.parseColor("#FFFF6B35")
+            Priority.HIGH -> Color.parseColor("#FFFF6B35")
             Priority.MEDIUM -> Color.parseColor("#FFF9A825")
-            Priority.LOW    -> Color.parseColor("#FF4CAF50")
-            Priority.NONE   -> Color.parseColor("#FF1A73E8")
+            Priority.LOW -> Color.parseColor("#FF4CAF50")
+            Priority.NONE -> Color.parseColor("#FF1A73E8")
         }
 
-        val bodyText = description.ifBlank { "${priority.emoji} Tap to open your reminder" }
+        val bodyText = description.ifBlank {
+            "${priority.emoji} ${context.getString(R.string.notif_tap_to_open)}"
+        }
 
         val notification = NotificationCompat.Builder(context, channelId)
             .setSmallIcon(android.R.drawable.ic_dialog_info)
@@ -64,7 +67,7 @@ class NotificationHelper @Inject constructor(
             .setStyle(
                 NotificationCompat.BigTextStyle()
                     .bigText(bodyText)
-                    .setBigContentTitle("${priority.emoji}  $title")
+                    .setBigContentTitle("${priority.emoji} $title")
             )
             .setColor(priorityColor)
             .setColorized(true)
@@ -73,10 +76,10 @@ class NotificationHelper @Inject constructor(
             .setVisibility(NotificationCompat.VISIBILITY_PUBLIC)
             .setAutoCancel(true)
             .setContentIntent(openPending)
-            .addAction(android.R.drawable.ic_media_pause, "5 min",  snooze5Pending)
-            .addAction(android.R.drawable.ic_media_pause, "15 min", snooze15Pending)
-            .addAction(android.R.drawable.ic_media_pause, "30 min", snooze30Pending)
-            .addAction(android.R.drawable.checkbox_on_background, "Done ✓", donePending)
+            .addAction(android.R.drawable.ic_media_pause, context.getString(R.string.notif_action_snooze_5), snooze5Pending)
+            .addAction(android.R.drawable.ic_media_pause, context.getString(R.string.notif_action_snooze_15), snooze15Pending)
+            .addAction(android.R.drawable.ic_media_pause, context.getString(R.string.notif_action_snooze_30), snooze30Pending)
+            .addAction(android.R.drawable.checkbox_on_background, context.getString(R.string.notif_action_done), donePending)
             .build()
 
         manager.notify(reminderId.toInt(), notification)
@@ -99,8 +102,8 @@ class NotificationHelper @Inject constructor(
 
     private fun buildSnoozeIntent(reminderId: Long, minutes: Int): PendingIntent {
         val action = when (minutes) {
-            5    -> LumioApp.ACTION_SNOOZE_5
-            15   -> LumioApp.ACTION_SNOOZE_15
+            5 -> LumioApp.ACTION_SNOOZE_5
+            15 -> LumioApp.ACTION_SNOOZE_15
             else -> LumioApp.ACTION_SNOOZE_30
         }
         val intent = Intent(context, NotificationActionReceiver::class.java).apply {

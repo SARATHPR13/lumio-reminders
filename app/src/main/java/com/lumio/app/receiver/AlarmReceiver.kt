@@ -13,8 +13,8 @@ import android.os.VibratorManager
 import androidx.core.app.NotificationCompat
 import com.lumio.app.LumioApp
 import com.lumio.app.MainActivity
+import com.lumio.app.R
 import com.lumio.app.domain.model.Priority
-import com.lumio.app.receiver.NotificationActionReceiver
 
 class AlarmReceiver : BroadcastReceiver() {
 
@@ -25,19 +25,19 @@ class AlarmReceiver : BroadcastReceiver() {
     }
 
     private fun handleAlarm(context: Context, intent: Intent) {
-        val reminderId  = intent.getLongExtra(LumioApp.EXTRA_REMINDER_ID, -1L)
+        val reminderId = intent.getLongExtra(LumioApp.EXTRA_REMINDER_ID, -1L)
         if (reminderId == -1L) return
 
-        val title       = intent.getStringExtra("title")       ?: "Reminder"
+        val title = intent.getStringExtra("title") ?: context.getString(R.string.notif_default_title)
         val description = intent.getStringExtra("description") ?: ""
-        val priorityStr = intent.getStringExtra("priority")    ?: Priority.NONE.name
-        val soundOn     = intent.getBooleanExtra("sound",      true)
-        val vibrationOn = intent.getBooleanExtra("vibration",  true)
-        val priority    = runCatching {
+        val priorityStr = intent.getStringExtra("priority") ?: Priority.NONE.name
+        val soundOn = intent.getBooleanExtra("sound", true)
+        val vibrationOn = intent.getBooleanExtra("vibration", true)
+        val priority = runCatching {
             Priority.valueOf(priorityStr)
         }.getOrDefault(Priority.NONE)
 
-        if (vibrationOn) vibrate(context)
+        if (vibrationOn) vibrate(context, priority)
         showNotification(context, reminderId, title, description, priority, soundOn)
     }
 
@@ -78,23 +78,25 @@ class AlarmReceiver : BroadcastReceiver() {
 
         val priorityColor = when (priority) {
             Priority.URGENT -> Color.parseColor("#FFD32F2F")
-            Priority.HIGH   -> Color.parseColor("#FFFF6B35")
+            Priority.HIGH -> Color.parseColor("#FFFF6B35")
             Priority.MEDIUM -> Color.parseColor("#FFF9A825")
-            Priority.LOW    -> Color.parseColor("#FF4CAF50")
-            Priority.NONE   -> Color.parseColor("#FF1A73E8")
+            Priority.LOW -> Color.parseColor("#FF4CAF50")
+            Priority.NONE -> Color.parseColor("#FF1A73E8")
         }
 
         val notifPriority = when (priority) {
             Priority.URGENT -> NotificationCompat.PRIORITY_MAX
-            Priority.HIGH   -> NotificationCompat.PRIORITY_HIGH
-            else            -> NotificationCompat.PRIORITY_DEFAULT
+            Priority.HIGH -> NotificationCompat.PRIORITY_HIGH
+            else -> NotificationCompat.PRIORITY_DEFAULT
         }
 
-        val bodyText = description.ifBlank { "${priority.emoji} Tap to view your reminder" }
+        val bodyText = description.ifBlank {
+            "${priority.emoji} ${context.getString(R.string.notif_tap_to_view)}"
+        }
 
         val notification = NotificationCompat.Builder(context, channelId)
             .setSmallIcon(android.R.drawable.ic_dialog_info)
-            .setContentTitle("${priority.emoji}  $title")
+            .setContentTitle("${priority.emoji} $title")
             .setContentText(bodyText)
             .setStyle(NotificationCompat.BigTextStyle().bigText(bodyText))
             .setColor(priorityColor)
@@ -104,14 +106,14 @@ class AlarmReceiver : BroadcastReceiver() {
             .setVisibility(NotificationCompat.VISIBILITY_PUBLIC)
             .setAutoCancel(true)
             .setContentIntent(openPending)
-            .addAction(android.R.drawable.ic_media_pause, "5 min",
+            .addAction(android.R.drawable.ic_media_pause, context.getString(R.string.notif_action_snooze_5),
                 snoozeIntent(LumioApp.ACTION_SNOOZE_5, (reminderId * 10 + 1).toInt()))
-            .addAction(android.R.drawable.ic_media_pause, "15 min",
+            .addAction(android.R.drawable.ic_media_pause, context.getString(R.string.notif_action_snooze_15),
                 snoozeIntent(LumioApp.ACTION_SNOOZE_15, (reminderId * 10 + 2).toInt()))
-            .addAction(android.R.drawable.ic_media_pause, "30 min",
+            .addAction(android.R.drawable.ic_media_pause, context.getString(R.string.notif_action_snooze_30),
                 snoozeIntent(LumioApp.ACTION_SNOOZE_30, (reminderId * 10 + 3).toInt()))
             .addAction(
-                android.R.drawable.checkbox_on_background, "Done ✓",
+                android.R.drawable.checkbox_on_background, context.getString(R.string.notif_action_done),
                 PendingIntent.getBroadcast(
                     context, (reminderId * 10 + 4).toInt(),
                     Intent(context, NotificationActionReceiver::class.java).apply {
@@ -127,9 +129,15 @@ class AlarmReceiver : BroadcastReceiver() {
         manager.notify(reminderId.toInt(), notification)
     }
 
-    private fun vibrate(context: Context) {
+    private fun vibrate(context: Context, priority: Priority) {
         try {
-            val pattern = longArrayOf(0, 400, 200, 400, 200, 400)
+            val pattern = when (priority) {
+                Priority.URGENT, Priority.HIGH ->
+                    longArrayOf(0, 900, 250, 900, 250, 900, 250, 900, 250, 900)
+                else ->
+                    longArrayOf(0, 900, 250, 900, 250, 900)
+            }
+
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
                 val mgr = context.getSystemService(Context.VIBRATOR_MANAGER_SERVICE) as VibratorManager
                 mgr.defaultVibrator.vibrate(VibrationEffect.createWaveform(pattern, -1))

@@ -11,12 +11,14 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.navigation.NavController
+import com.lumio.app.R
 import com.lumio.app.presentation.navigation.Screen
 
 @Composable
@@ -29,7 +31,7 @@ fun SettingsScreen(
     Scaffold(
         topBar = {
             TopAppBar(
-                title  = { Text("Settings", fontWeight = FontWeight.Bold) },
+                title = { Text(stringResource(R.string.settings_title), fontWeight = FontWeight.Bold) },
                 colors = TopAppBarDefaults.topAppBarColors(
                     containerColor = MaterialTheme.colorScheme.background
                 )
@@ -38,7 +40,7 @@ fun SettingsScreen(
         containerColor = MaterialTheme.colorScheme.background
     ) { padding ->
         LazyColumn(
-            modifier       = Modifier
+            modifier = Modifier
                 .fillMaxSize()
                 .padding(padding),
             contentPadding = PaddingValues(16.dp),
@@ -47,10 +49,12 @@ fun SettingsScreen(
 
             // ── Appearance ────────────────────────────
             item {
-                SettingsGroup(title = "Appearance", icon = Icons.Rounded.Palette) {
+                SettingsGroup(title = stringResource(R.string.section_appearance), icon = Icons.Rounded.Palette) {
 
-                    SettingsLabel("Theme Mode", Icons.Rounded.DarkMode,
-                        uiState.themeMode.replaceFirstChar { it.uppercase() })
+                    SettingsLabel(
+                        stringResource(R.string.theme_mode_label), Icons.Rounded.DarkMode,
+                        uiState.themeMode.replaceFirstChar { it.uppercase() }
+                    )
 
                     Row(
                         modifier = Modifier
@@ -59,17 +63,17 @@ fun SettingsScreen(
                         horizontalArrangement = Arrangement.spacedBy(6.dp)
                     ) {
                         listOf(
-                            "light"  to "Light",
-                            "dark"   to "Dark",
-                            "amoled" to "AMOLED",
-                            "system" to "System"
+                            "light" to stringResource(R.string.theme_light),
+                            "dark" to stringResource(R.string.theme_dark),
+                            "amoled" to stringResource(R.string.theme_amoled),
+                            "system" to stringResource(R.string.theme_system)
                         ).forEach { (key, label) ->
                             FilterChip(
                                 selected = uiState.themeMode == key,
-                                onClick  = { viewModel.setThemeMode(key) },
-                                label    = { Text(label, fontSize = 11.sp) },
+                                onClick = { viewModel.setThemeMode(key) },
+                                label = { Text(label, fontSize = 11.sp) },
                                 modifier = Modifier.weight(1f),
-                                shape    = RoundedCornerShape(8.dp)
+                                shape = RoundedCornerShape(8.dp)
                             )
                         }
                     }
@@ -77,18 +81,21 @@ fun SettingsScreen(
                     Divider()
 
                     SwitchItem(
-                        icon     = Icons.Rounded.ColorLens,
-                        title    = "Dynamic Colors",
-                        subtitle = "Use wallpaper colors (Android 12+)",
-                        checked  = uiState.dynamicColors,
+                        icon = Icons.Rounded.ColorLens,
+                        title = stringResource(R.string.dynamic_colors_title),
+                        subtitle = stringResource(R.string.dynamic_colors_subtitle),
+                        checked = uiState.dynamicColors,
                         onToggle = { viewModel.setDynamicColors(it) }
                     )
                 }
             }
 
             // ── Language ──────────────────────────────
+            // Language display names intentionally stay as literal native-script
+            // strings (not stringResource) — each entry IS a language name in
+            // its own language, so translating them would defeat the point.
             item {
-                SettingsGroup(title = "Language", icon = Icons.Rounded.Language) {
+                SettingsGroup(title = stringResource(R.string.section_language), icon = Icons.Rounded.Language) {
                     listOf(
                         "en" to "English",
                         "ml" to "Malayalam — മലയാളം",
@@ -99,7 +106,7 @@ fun SettingsScreen(
                         if (index > 0) Divider()
                         Surface(
                             onClick = { viewModel.setLanguage(code) },
-                            color   = Color.Transparent
+                            color = Color.Transparent
                         ) {
                             Row(
                                 modifier = Modifier
@@ -109,7 +116,7 @@ fun SettingsScreen(
                                 horizontalArrangement = Arrangement.spacedBy(14.dp)
                             ) {
                                 Text(
-                                    text     = when (code) {
+                                    text = when (code) {
                                         "en" -> "🇬🇧"
                                         "ml" -> "🇮🇳"
                                         "hi" -> "🇮🇳"
@@ -120,15 +127,15 @@ fun SettingsScreen(
                                     fontSize = 22.sp
                                 )
                                 Text(
-                                    text     = label,
-                                    style    = MaterialTheme.typography.bodyMedium,
+                                    text = label,
+                                    style = MaterialTheme.typography.bodyMedium,
                                     modifier = Modifier.weight(1f)
                                 )
                                 if (uiState.language == code) {
                                     Icon(
                                         Icons.Rounded.CheckCircle,
                                         contentDescription = null,
-                                        tint     = MaterialTheme.colorScheme.primary,
+                                        tint = MaterialTheme.colorScheme.primary,
                                         modifier = Modifier.size(20.dp)
                                     )
                                 }
@@ -140,20 +147,20 @@ fun SettingsScreen(
 
             // ── Notifications ─────────────────────────
             item {
-                SettingsGroup(title = "Notifications", icon = Icons.Rounded.Notifications) {
+                SettingsGroup(title = stringResource(R.string.section_notifications), icon = Icons.Rounded.Notifications) {
                     SwitchItem(
-                        icon     = Icons.Rounded.VolumeUp,
-                        title    = "Sound",
-                        subtitle = "Play sound for reminders",
-                        checked  = uiState.defaultSound,
+                        icon = Icons.Rounded.VolumeUp,
+                        title = stringResource(R.string.sound_title),
+                        subtitle = stringResource(R.string.sound_subtitle),
+                        checked = uiState.defaultSound,
                         onToggle = { viewModel.setDefaultSound(it) }
                     )
                     Divider()
                     SwitchItem(
-                        icon     = Icons.Rounded.Vibration,
-                        title    = "Vibration",
-                        subtitle = "Vibrate for reminders",
-                        checked  = uiState.defaultVibration,
+                        icon = Icons.Rounded.Vibration,
+                        title = stringResource(R.string.vibration_title),
+                        subtitle = stringResource(R.string.vibration_subtitle),
+                        checked = uiState.defaultVibration,
                         onToggle = { viewModel.setDefaultVibration(it) }
                     )
                 }
@@ -161,38 +168,38 @@ fun SettingsScreen(
 
             // ── Features ──────────────────────────────
             item {
-                SettingsGroup(title = "Features", icon = Icons.Rounded.Apps) {
+                SettingsGroup(title = stringResource(R.string.section_features), icon = Icons.Rounded.Apps) {
                     ClickItem(
-                        icon     = Icons.Rounded.LocationOn,
-                        title    = "Location Reminders",
-                        subtitle = "Set reminders by location",
-                        onClick  = { navController.navigate(Screen.Location.route) }
+                        icon = Icons.Rounded.LocationOn,
+                        title = stringResource(R.string.location_reminders_title),
+                        subtitle = stringResource(R.string.location_reminders_subtitle),
+                        onClick = { navController.navigate(Screen.Location.route) }
                     )
                     Divider()
                     ClickItem(
-                        icon     = Icons.Rounded.WbSunny,
-                        title    = "Weather Reminders",
-                        subtitle = "Smart weather-based alerts",
-                        onClick  = { navController.navigate(Screen.Weather.route) }
+                        icon = Icons.Rounded.WbSunny,
+                        title = stringResource(R.string.weather_reminders_title),
+                        subtitle = stringResource(R.string.weather_reminders_subtitle),
+                        onClick = { navController.navigate(Screen.Weather.route) }
                     )
                     Divider()
                     ClickItem(
-                        icon     = Icons.Rounded.BarChart,
-                        title    = "Statistics",
-                        subtitle = "View your productivity stats",
-                        onClick  = { navController.navigate(Screen.Stats.route) }
+                        icon = Icons.Rounded.BarChart,
+                        title = stringResource(R.string.statistics_title),
+                        subtitle = stringResource(R.string.statistics_subtitle),
+                        onClick = { navController.navigate(Screen.Stats.route) }
                     )
                 }
             }
 
             // ── Security ─────────────────────────────
             item {
-                SettingsGroup(title = "Security", icon = Icons.Rounded.Security) {
+                SettingsGroup(title = stringResource(R.string.section_security), icon = Icons.Rounded.Security) {
                     SwitchItem(
-                        icon     = Icons.Rounded.Fingerprint,
-                        title    = "Biometric Lock",
-                        subtitle = "Use fingerprint to unlock app",
-                        checked  = uiState.biometricEnabled,
+                        icon = Icons.Rounded.Fingerprint,
+                        title = stringResource(R.string.biometric_title),
+                        subtitle = stringResource(R.string.biometric_subtitle),
+                        checked = uiState.biometricEnabled,
                         onToggle = { viewModel.setBiometricEnabled(it) }
                     )
                 }
@@ -200,12 +207,12 @@ fun SettingsScreen(
 
             // ── About ─────────────────────────────────
             item {
-                SettingsGroup(title = "About", icon = Icons.Rounded.Info) {
-                    SettingsLabel("App", Icons.Rounded.AppShortcut, "LUMIO v1.0.0")
+                SettingsGroup(title = stringResource(R.string.section_about), icon = Icons.Rounded.Info) {
+                    SettingsLabel(stringResource(R.string.about_app_label), Icons.Rounded.AppShortcut, stringResource(R.string.about_app_value))
                     Divider()
-                    SettingsLabel("Developer", Icons.Rounded.Person, "SARATHPR13")
+                    SettingsLabel(stringResource(R.string.about_developer_label), Icons.Rounded.Person, "SARATHPR13")
                     Divider()
-                    SettingsLabel("Built with", Icons.Rounded.Code, "Kotlin + Jetpack Compose")
+                    SettingsLabel(stringResource(R.string.about_built_with_label), Icons.Rounded.Code, stringResource(R.string.about_built_with_value))
                 }
             }
 
@@ -216,26 +223,26 @@ fun SettingsScreen(
 
 @Composable
 private fun SettingsGroup(
-    title   : String,
-    icon    : ImageVector,
-    content : @Composable ColumnScope.() -> Unit
+    title: String,
+    icon: ImageVector,
+    content: @Composable ColumnScope.() -> Unit
 ) {
     Column(verticalArrangement = Arrangement.spacedBy(6.dp)) {
         Row(
-            verticalAlignment     = Alignment.CenterVertically,
+            verticalAlignment = Alignment.CenterVertically,
             horizontalArrangement = Arrangement.spacedBy(8.dp),
-            modifier              = Modifier.padding(horizontal = 4.dp)
+            modifier = Modifier.padding(horizontal = 4.dp)
         ) {
             Icon(icon, null,
-                tint     = MaterialTheme.colorScheme.primary,
+                tint = MaterialTheme.colorScheme.primary,
                 modifier = Modifier.size(16.dp))
             Text(title,
-                style      = MaterialTheme.typography.labelLarge,
+                style = MaterialTheme.typography.labelLarge,
                 fontWeight = FontWeight.Bold,
-                color      = MaterialTheme.colorScheme.primary)
+                color = MaterialTheme.colorScheme.primary)
         }
         Card(
-            shape  = RoundedCornerShape(16.dp),
+            shape = RoundedCornerShape(16.dp),
             colors = CardDefaults.cardColors(
                 containerColor = MaterialTheme.colorScheme.surface
             ),
@@ -255,11 +262,11 @@ private fun SwitchItem(
         modifier = Modifier
             .fillMaxWidth()
             .padding(horizontal = 16.dp, vertical = 14.dp),
-        verticalAlignment     = Alignment.CenterVertically,
+        verticalAlignment = Alignment.CenterVertically,
         horizontalArrangement = Arrangement.spacedBy(14.dp)
     ) {
         Icon(icon, null,
-            tint     = MaterialTheme.colorScheme.onSurfaceVariant,
+            tint = MaterialTheme.colorScheme.onSurfaceVariant,
             modifier = Modifier.size(22.dp))
         Column(Modifier.weight(1f)) {
             Text(title, style = MaterialTheme.typography.bodyMedium, fontWeight = FontWeight.Medium)
@@ -280,11 +287,11 @@ private fun ClickItem(
             modifier = Modifier
                 .fillMaxWidth()
                 .padding(horizontal = 16.dp, vertical = 14.dp),
-            verticalAlignment     = Alignment.CenterVertically,
+            verticalAlignment = Alignment.CenterVertically,
             horizontalArrangement = Arrangement.spacedBy(14.dp)
         ) {
             Icon(icon, null,
-                tint     = MaterialTheme.colorScheme.onSurfaceVariant,
+                tint = MaterialTheme.colorScheme.onSurfaceVariant,
                 modifier = Modifier.size(22.dp))
             Column(Modifier.weight(1f)) {
                 Text(title, style = MaterialTheme.typography.bodyMedium, fontWeight = FontWeight.Medium)
@@ -292,7 +299,7 @@ private fun ClickItem(
                     color = MaterialTheme.colorScheme.onSurfaceVariant)
             }
             Icon(Icons.Rounded.ChevronRight, null,
-                tint     = MaterialTheme.colorScheme.onSurfaceVariant,
+                tint = MaterialTheme.colorScheme.onSurfaceVariant,
                 modifier = Modifier.size(18.dp))
         }
     }
@@ -304,11 +311,11 @@ private fun SettingsLabel(title: String, icon: ImageVector, value: String) {
         modifier = Modifier
             .fillMaxWidth()
             .padding(horizontal = 16.dp, vertical = 14.dp),
-        verticalAlignment     = Alignment.CenterVertically,
+        verticalAlignment = Alignment.CenterVertically,
         horizontalArrangement = Arrangement.spacedBy(14.dp)
     ) {
         Icon(icon, null,
-            tint     = MaterialTheme.colorScheme.onSurfaceVariant,
+            tint = MaterialTheme.colorScheme.onSurfaceVariant,
             modifier = Modifier.size(22.dp))
         Text(title, style = MaterialTheme.typography.bodyMedium,
             fontWeight = FontWeight.Medium, modifier = Modifier.weight(1f))
@@ -320,8 +327,8 @@ private fun SettingsLabel(title: String, icon: ImageVector, value: String) {
 @Composable
 private fun Divider() {
     HorizontalDivider(
-        modifier  = Modifier.padding(horizontal = 16.dp),
+        modifier = Modifier.padding(horizontal = 16.dp),
         thickness = 0.5.dp,
-        color     = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.5f)
+        color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.5f)
     )
 }
