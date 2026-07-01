@@ -41,7 +41,11 @@ data class ReminderEntity(
     val voiceNotePath: String?   = null,
     val isHidden: Boolean        = false,
     val createdAt: Long          = System.currentTimeMillis(),
-    val updatedAt: Long          = System.currentTimeMillis()
+    val updatedAt: Long          = System.currentTimeMillis(),
+    // ── Location (optional) — added in the voice/location merge ──
+    val latitude: Double?        = null,
+    val longitude: Double?       = null,
+    val locationName: String?    = null
 ) {
     fun toDomain(category: com.lumio.app.domain.model.Category? = null) = Reminder(
         id               = id,
@@ -57,7 +61,10 @@ data class ReminderEntity(
         imagePath        = imagePath,
         voiceNotePath    = voiceNotePath,
         isHidden         = isHidden,
-        createdAt        = createdAt
+        createdAt        = createdAt,
+        latitude         = latitude,
+        longitude        = longitude,
+        locationName     = locationName
     )
 
     companion object {
@@ -76,7 +83,10 @@ data class ReminderEntity(
             voiceNotePath    = reminder.voiceNotePath,
             isHidden         = reminder.isHidden,
             createdAt        = reminder.createdAt,
-            updatedAt        = System.currentTimeMillis()
+            updatedAt        = System.currentTimeMillis(),
+            latitude         = reminder.latitude,
+            longitude        = reminder.longitude,
+            locationName     = reminder.locationName
         )
     }
 }

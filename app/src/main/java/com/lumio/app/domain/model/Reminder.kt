@@ -17,8 +17,15 @@ data class Reminder(
     val imagePath: String? = null,
     val voiceNotePath: String? = null,
     val isHidden: Boolean = false,
-    val createdAt: Long = System.currentTimeMillis()
+    val createdAt: Long = System.currentTimeMillis(),
+    // ── Location (optional) — added in the voice/location merge ──
+    val latitude: Double? = null,
+    val longitude: Double? = null,
+    val locationName: String? = null
 ) {
+    val hasLocation: Boolean
+        get() = latitude != null && longitude != null
+
     val isOverdue: Boolean
         get() = !isCompleted && dateTimeMillis < System.currentTimeMillis()
 
@@ -27,7 +34,7 @@ data class Reminder(
             val r = Calendar.getInstance().apply { timeInMillis = dateTimeMillis }
             val t = Calendar.getInstance()
             return r.get(Calendar.YEAR) == t.get(Calendar.YEAR) &&
-                   r.get(Calendar.DAY_OF_YEAR) == t.get(Calendar.DAY_OF_YEAR)
+                r.get(Calendar.DAY_OF_YEAR) == t.get(Calendar.DAY_OF_YEAR)
         }
 
     val formattedTime: String
