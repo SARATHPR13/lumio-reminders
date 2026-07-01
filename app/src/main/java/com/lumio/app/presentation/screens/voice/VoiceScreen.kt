@@ -1,11 +1,14 @@
 package com.lumio.app.presentation.screens.voice
 
-import androidx.compose.animation.core.*
-import androidx.compose.foundation.*
+import android.Manifest
+import android.content.pm.PackageManager
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.layout.*
-import androidx.compose.foundation.lazy.*
+import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.rounded.ArrowBack
 import androidx.compose.material.icons.rounded.*
@@ -13,49 +16,67 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.clip
-import androidx.compose.ui.draw.scale
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
+import androidx.core.content.ContextCompat
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.navigation.NavController
-import com.lumio.app.domain.model.Category
 import com.lumio.app.domain.model.Priority
-import com.lumio.app.presentation.components.LumioBottomNavBar
 import com.lumio.app.voice.SpeechState
 
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun VoiceScreen(
     navController: NavController,
     viewModel: VoiceViewModel = hiltViewModel()
 ) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
+    val context = LocalContext.current
+    var input by remember { mutableStateOf("") }
+
+    // Mic permission — request only when the user taps the mic.
+    val recordPerm = rememberLauncherForActivityResult(
+        ActivityResultContracts.RequestPermission()
+    ) { granted -> if (granted) viewModel.startListening() }
+
+    val onMic: () -> Unit = {
+        val granted = ContextCompat.checkSelfPermission(
+            context, Manifest.permission.RECORD_AUDIO
+        ) == PackageManager.PERMISSION_GRANTED
+        if (granted) viewModel.startListening()
+        else recordPerm.launch(Manifest.permission.RECORD_AUDIO)
+    }
 
     LaunchedEffect(uiState.isSaved) {
-        if (uiState.isSaved) navController.popBackStack()
+        if (uiState.isSaved) {
+            viewModel.reset()
+            navController.popBackStack()
+        }
     }
+
+    val listening = uiState.speechState is SpeechState.Listening
+    val processing = uiState.speechState is SpeechState.Processing
+    val hasPreview = uiState.parsedTitle.isNotBlank()
 
     Scaffold(
         topBar = {
             TopAppBar(
-                title = { Text("Voice Reminder", fontWeight = FontWeight.Bold) },
+                title = { Text("Quick add", fontWeight = FontWeight.Bold) },
                 navigationIcon = {
                     IconButton(onClick = {
                         viewModel.stopListening()
                         navController.popBackStack()
-                    }) {
-                        Icon(Icons.AutoMirrored.Rounded.ArrowBack, "Back")
-                    }
+                    }) { Icon(Icons.AutoMirrored.Rounded.ArrowBack, "Back") }
                 },
                 actions = {
-                    if (uiState.showPreview) {
-                        IconButton(onClick = { viewModel.reset() }) {
-                            Icon(Icons.Rounded.Refresh, "Reset")
-                        }
+                    if (hasPreview) {
+                        IconButton(onClick = {
+                            input = ""
+                            viewModel.reset()
+                        }) { Icon(Icons.Rounded.Refresh, "Start over") }
                     }
                 },
                 colors = TopAppBarDefaults.topAppBarColors(
@@ -63,438 +84,298 @@ fun VoiceScreen(
                 )
             )
         },
-        bottomBar = { LumioBottomNavBar(navController) },
         containerColor = MaterialTheme.colorScheme.background
     ) { padding ->
         Column(
             modifier = Modifier
                 .fillMaxSize()
                 .padding(padding)
-                .verticalScroll(rememberScrollState()),
-            horizontalAlignment = Alignment.CenterHorizontally
+                .verticalScroll(rememberScrollState())
+                .padding(horizontal = 20.dp)
         ) {
-            if (!uiState.isAvailable) {
-                NotAvailableState()
-                return@Column
-            }
-
-            Spacer(Modifier.height(24.dp))
-
-            MicSection(
-                speechState = uiState.speechState,
-                spokenText  = uiState.spokenText,
-                onMicClick  = {
-                    when (uiState.speechState) {
-                        is SpeechState.Listening -> viewModel.stopListening()
-                        else                     -> viewModel.startListening()
-                    }
-                }
+            Spacer(Modifier.height(4.dp))
+            Text(
+                "Tell me what to remember",
+                style = MaterialTheme.typography.headlineSmall,
+                fontWeight = FontWeight.Bold
+            )
+            Text(
+                "Type it or tap the mic — I'll work out the time for you.",
+                style = MaterialTheme.typography.bodyMedium,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                modifier = Modifier.padding(top = 4.dp)
             )
 
-            Spacer(Modifier.height(24.dp))
+            Spacer(Modifier.height(20.dp))
 
-            uiState.errorMessage?.let { error ->
-                Card(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(horizontal = 16.dp),
-                    shape  = RoundedCornerShape(12.dp),
-                    colors = CardDefaults.cardColors(
-                        containerColor = MaterialTheme.colorScheme.errorContainer
-                    )
-                ) {
-                    Row(
-                        modifier = Modifier.padding(12.dp),
-                        verticalAlignment = Alignment.CenterVertically,
-                        horizontalArrangement = Arrangement.spacedBy(10.dp)
-                    ) {
-                        Icon(Icons.Rounded.Warning, null,
-                            tint = MaterialTheme.colorScheme.onErrorContainer)
-                        Text(error,
-                            color = MaterialTheme.colorScheme.onErrorContainer,
-                            style = MaterialTheme.typography.bodySmall)
-                    }
-                }
-                Spacer(Modifier.height(16.dp))
-            }
-
-            if (uiState.showPreview) {
-                ParsedPreview(
-                    uiState    = uiState,
-                    onTitle    = { viewModel.updateTitle(it) },
-                    onPriority = { viewModel.updatePriority(it) },
-                    onCategory = { viewModel.updateCategory(it) },
-                    onSave     = { viewModel.saveReminder() }
-                )
-            } else {
-                SuggestionsSection(
-                    suggestions = uiState.suggestions,
-                    onTap       = { viewModel.useSuggestion(it) }
-                )
-            }
-
-            Spacer(Modifier.height(80.dp))
-        }
-    }
-}
-
-@Composable
-private fun MicSection(
-    speechState: SpeechState,
-    spokenText: String,
-    onMicClick: () -> Unit
-) {
-    val isListening = speechState is SpeechState.Listening
-    val infiniteAnim = rememberInfiniteTransition(label = "pulse")
-    val pulseScale by infiniteAnim.animateFloat(
-        initialValue  = 1f,
-        targetValue   = 1.25f,
-        animationSpec = infiniteRepeatable(
-            animation  = tween(800, easing = EaseInOut),
-            repeatMode = RepeatMode.Reverse
-        ),
-        label = "pulse"
-    )
-
-    Column(
-        horizontalAlignment = Alignment.CenterHorizontally,
-        verticalArrangement = Arrangement.spacedBy(20.dp),
-        modifier = Modifier.padding(horizontal = 24.dp)
-    ) {
-        Box(contentAlignment = Alignment.Center) {
-            if (isListening) {
-                Box(
-                    modifier = Modifier
-                        .size(140.dp)
-                        .scale(pulseScale)
-                        .clip(CircleShape)
-                        .background(MaterialTheme.colorScheme.primary.copy(alpha = 0.15f))
-                )
-            }
-            Surface(
-                onClick         = onMicClick,
-                shape           = CircleShape,
-                color           = when (speechState) {
-                    is SpeechState.Listening  -> MaterialTheme.colorScheme.error
-                    is SpeechState.Processing -> MaterialTheme.colorScheme.secondary
-                    else                      -> MaterialTheme.colorScheme.primary
+            // ── Text input ──
+            OutlinedTextField(
+                value = input,
+                onValueChange = { input = it },
+                modifier = Modifier.fillMaxWidth(),
+                placeholder = { Text("e.g. Call Meera tomorrow at 5 PM") },
+                trailingIcon = {
+                    IconButton(
+                        onClick = { if (input.isNotBlank()) viewModel.useSuggestion(input.trim()) },
+                        enabled = input.isNotBlank()
+                    ) { Icon(Icons.Rounded.Send, "Parse") }
                 },
-                modifier        = Modifier.size(100.dp),
-                shadowElevation = if (isListening) 12.dp else 4.dp
+                shape = RoundedCornerShape(16.dp),
+                maxLines = 3
+            )
+
+            Spacer(Modifier.height(20.dp))
+
+            // ── Mic ──
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.Center,
+                verticalAlignment = Alignment.CenterVertically
             ) {
-                Box(Modifier.fillMaxSize(), Alignment.Center) {
-                    when (speechState) {
-                        is SpeechState.Processing -> {
+                Surface(
+                    onClick = onMic,
+                    shape = CircleShape,
+                    color = if (listening) MaterialTheme.colorScheme.primary
+                    else MaterialTheme.colorScheme.primaryContainer,
+                    modifier = Modifier.size(72.dp)
+                ) {
+                    Box(contentAlignment = Alignment.Center) {
+                        if (processing) {
                             CircularProgressIndicator(
-                                modifier = Modifier.size(36.dp),
-                                color    = Color.White
+                                modifier = Modifier.size(26.dp),
+                                strokeWidth = 2.5.dp,
+                                color = MaterialTheme.colorScheme.primary
+                            )
+                        } else {
+                            Icon(
+                                Icons.Rounded.Mic,
+                                contentDescription = "Speak",
+                                tint = if (listening) Color.White
+                                else MaterialTheme.colorScheme.onPrimaryContainer,
+                                modifier = Modifier.size(30.dp)
                             )
                         }
-                        is SpeechState.Listening -> {
-                            Icon(Icons.Rounded.MicOff, "Stop",
-                                tint     = Color.White,
-                                modifier = Modifier.size(44.dp))
-                        }
-                        else -> {
-                            Icon(Icons.Rounded.Mic, "Start",
-                                tint     = Color.White,
-                                modifier = Modifier.size(44.dp))
+                    }
+                }
+            }
+            Text(
+                text = when {
+                    listening -> "Listening…"
+                    processing -> "Thinking…"
+                    else -> "Tap to speak"
+                },
+                style = MaterialTheme.typography.bodySmall,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(top = 8.dp),
+                textAlign = androidx.compose.ui.text.style.TextAlign.Center
+            )
+
+            // ── Suggestions (only before a preview exists) ──
+            if (!hasPreview) {
+                Spacer(Modifier.height(20.dp))
+                Text(
+                    "Try one of these",
+                    style = MaterialTheme.typography.labelLarge,
+                    fontWeight = FontWeight.Bold,
+                    color = MaterialTheme.colorScheme.primary
+                )
+                Spacer(Modifier.height(8.dp))
+                uiState.suggestions.forEach { s ->
+                    Surface(
+                        onClick = {
+                            input = s
+                            viewModel.useSuggestion(s)
+                        },
+                        shape = RoundedCornerShape(12.dp),
+                        color = MaterialTheme.colorScheme.surface,
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(vertical = 4.dp)
+                    ) {
+                        Row(
+                            modifier = Modifier.padding(horizontal = 14.dp, vertical = 12.dp),
+                            verticalAlignment = Alignment.CenterVertically,
+                            horizontalArrangement = Arrangement.spacedBy(10.dp)
+                        ) {
+                            Icon(
+                                Icons.Rounded.AutoAwesome,
+                                contentDescription = null,
+                                tint = MaterialTheme.colorScheme.primary,
+                                modifier = Modifier.size(16.dp)
+                            )
+                            Text(s, style = MaterialTheme.typography.bodyMedium)
                         }
                     }
                 }
             }
-        }
 
-        Text(
-            text = when (speechState) {
-                is SpeechState.Idle       -> "Tap to speak"
-                is SpeechState.Listening  -> "Listening…"
-                is SpeechState.Processing -> "Processing…"
-                is SpeechState.Result     -> "Got it!"
-                is SpeechState.Error      -> "Try again"
-            },
-            style      = MaterialTheme.typography.titleMedium,
-            fontWeight = FontWeight.SemiBold,
-            color      = when (speechState) {
-                is SpeechState.Listening  -> MaterialTheme.colorScheme.error
-                is SpeechState.Processing -> MaterialTheme.colorScheme.secondary
-                is SpeechState.Result     -> Color(0xFF4CAF50)
-                is SpeechState.Error      -> MaterialTheme.colorScheme.error
-                else                      -> MaterialTheme.colorScheme.onBackground
+            // ── Preview card ──
+            if (hasPreview) {
+                Spacer(Modifier.height(20.dp))
+                PreviewCard(uiState = uiState, viewModel = viewModel)
             }
-        )
 
-        if (speechState is SpeechState.Idle) {
-            Card(
-                shape  = RoundedCornerShape(12.dp),
-                colors = CardDefaults.cardColors(
-                    containerColor = MaterialTheme.colorScheme.secondaryContainer
-                )
-            ) {
+            // ── Error ──
+            uiState.errorMessage?.let { msg ->
+                Spacer(Modifier.height(12.dp))
                 Text(
-                    text      = "Say: \"Remind me to call Rahul\ntomorrow at 6 PM\"",
-                    modifier  = Modifier.padding(12.dp),
-                    textAlign = TextAlign.Center,
-                    style     = MaterialTheme.typography.bodySmall,
-                    color     = MaterialTheme.colorScheme.onSecondaryContainer
-                )
-            }
-        }
-
-        if (spokenText.isNotBlank()) {
-            Card(
-                modifier = Modifier.fillMaxWidth(),
-                shape    = RoundedCornerShape(12.dp),
-                colors   = CardDefaults.cardColors(
-                    containerColor = MaterialTheme.colorScheme.primaryContainer
-                )
-            ) {
-                Row(
-                    modifier = Modifier.padding(14.dp),
-                    verticalAlignment = Alignment.CenterVertically,
-                    horizontalArrangement = Arrangement.spacedBy(10.dp)
-                ) {
-                    Icon(Icons.Rounded.RecordVoiceOver, null,
-                        tint     = MaterialTheme.colorScheme.onPrimaryContainer,
-                        modifier = Modifier.size(18.dp))
-                    Text(
-                        text       = "\"$spokenText\"",
-                        style      = MaterialTheme.typography.bodyMedium,
-                        fontWeight = FontWeight.Medium,
-                        color      = MaterialTheme.colorScheme.onPrimaryContainer
-                    )
-                }
-            }
-        }
-    }
-}
-
-@Composable
-private fun ParsedPreview(
-    uiState: VoiceUiState,
-    onTitle: (String) -> Unit,
-    onPriority: (Priority) -> Unit,
-    onCategory: (Category?) -> Unit,
-    onSave: () -> Unit
-) {
-    Column(
-        modifier = Modifier
-            .fillMaxWidth()
-            .padding(16.dp),
-        verticalArrangement = Arrangement.spacedBy(16.dp)
-    ) {
-        Row(verticalAlignment = Alignment.CenterVertically) {
-            Icon(Icons.Rounded.AutoAwesome, null,
-                tint     = MaterialTheme.colorScheme.primary,
-                modifier = Modifier.size(20.dp))
-            Spacer(Modifier.width(8.dp))
-            Text("AI Parsed Result",
-                style      = MaterialTheme.typography.titleMedium,
-                fontWeight = FontWeight.Bold,
-                color      = MaterialTheme.colorScheme.primary)
-            Spacer(Modifier.weight(1f))
-            val confColor = when {
-                uiState.confidence > 0.8f -> Color(0xFF4CAF50)
-                uiState.confidence > 0.5f -> Color(0xFFF9A825)
-                else                      -> Color(0xFFFF6B35)
-            }
-            Surface(
-                shape = RoundedCornerShape(20.dp),
-                color = confColor.copy(alpha = 0.15f)
-            ) {
-                Text(
-                    "${(uiState.confidence * 100).toInt()}% confident",
-                    modifier   = Modifier.padding(horizontal = 10.dp, vertical = 4.dp),
-                    fontSize   = 11.sp,
-                    fontWeight = FontWeight.SemiBold,
-                    color      = confColor
-                )
-            }
-        }
-
-        OutlinedTextField(
-            value         = uiState.parsedTitle,
-            onValueChange = onTitle,
-            label         = { Text("Title") },
-            leadingIcon   = { Icon(Icons.Rounded.Title, null) },
-            modifier      = Modifier.fillMaxWidth(),
-            shape         = RoundedCornerShape(12.dp),
-            singleLine    = true
-        )
-
-        Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
-            Card(
-                modifier = Modifier.weight(1f),
-                shape    = RoundedCornerShape(12.dp),
-                colors   = CardDefaults.cardColors(
-                    containerColor = MaterialTheme.colorScheme.primaryContainer
-                )
-            ) {
-                Column(modifier = Modifier.padding(12.dp)) {
-                    Text("Date", style = MaterialTheme.typography.labelSmall,
-                        color = MaterialTheme.colorScheme.onPrimaryContainer)
-                    Text(uiState.parsedDate, fontWeight = FontWeight.Bold,
-                        color = MaterialTheme.colorScheme.onPrimaryContainer)
-                }
-            }
-            Card(
-                modifier = Modifier.weight(1f),
-                shape    = RoundedCornerShape(12.dp),
-                colors   = CardDefaults.cardColors(
-                    containerColor = MaterialTheme.colorScheme.primaryContainer
-                )
-            ) {
-                Column(modifier = Modifier.padding(12.dp)) {
-                    Text("Time", style = MaterialTheme.typography.labelSmall,
-                        color = MaterialTheme.colorScheme.onPrimaryContainer)
-                    Text(uiState.parsedTime, fontWeight = FontWeight.Bold,
-                        color = MaterialTheme.colorScheme.onPrimaryContainer)
-                }
-            }
-        }
-
-        Text("Priority", style = MaterialTheme.typography.labelLarge,
-            fontWeight = FontWeight.SemiBold,
-            color = MaterialTheme.colorScheme.onSurfaceVariant)
-        LazyRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-            items(Priority.values()) { p ->
-                val sel   = uiState.parsedPriority == p
-                val color = Color(android.graphics.Color.parseColor(p.colorHex))
-                FilterChip(
-                    selected = sel,
-                    onClick  = { onPriority(p) },
-                    label    = { Text("${p.emoji} ${p.label}", fontSize = 12.sp) },
-                    colors   = FilterChipDefaults.filterChipColors(
-                        selectedContainerColor = color.copy(alpha = 0.2f),
-                        selectedLabelColor     = color
-                    )
-                )
-            }
-        }
-
-        Text("Category", style = MaterialTheme.typography.labelLarge,
-            fontWeight = FontWeight.SemiBold,
-            color = MaterialTheme.colorScheme.onSurfaceVariant)
-        LazyRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-            item {
-                FilterChip(
-                    selected = uiState.parsedCategory == null,
-                    onClick  = { onCategory(null) },
-                    label    = { Text("None") }
-                )
-            }
-            items(Category.defaults) { cat ->
-                val sel   = uiState.parsedCategory?.id == cat.id
-                val color = Color(android.graphics.Color.parseColor(cat.colorHex))
-                FilterChip(
-                    selected = sel,
-                    onClick  = { onCategory(cat) },
-                    label    = { Text("${cat.emoji} ${cat.name}", fontSize = 12.sp) },
-                    colors   = FilterChipDefaults.filterChipColors(
-                        selectedContainerColor = color.copy(alpha = 0.2f),
-                        selectedLabelColor     = color
-                    )
-                )
-            }
-        }
-
-        Button(
-            onClick  = onSave,
-            modifier = Modifier.fillMaxWidth().height(52.dp),
-            shape    = RoundedCornerShape(12.dp),
-            enabled  = !uiState.isSaving
-        ) {
-            if (uiState.isSaving) {
-                CircularProgressIndicator(
-                    modifier = Modifier.size(20.dp),
-                    color    = MaterialTheme.colorScheme.onPrimary
-                )
-            } else {
-                Icon(Icons.Rounded.Check, null, modifier = Modifier.size(20.dp))
-                Spacer(Modifier.width(8.dp))
-                Text("Save Reminder", fontWeight = FontWeight.Bold, fontSize = 16.sp)
-            }
-        }
-    }
-}
-
-@Composable
-private fun SuggestionsSection(
-    suggestions: List<String>,
-    onTap: (String) -> Unit
-) {
-    Column(
-        modifier = Modifier
-            .fillMaxWidth()
-            .padding(horizontal = 16.dp),
-        verticalArrangement = Arrangement.spacedBy(10.dp)
-    ) {
-        Row(verticalAlignment = Alignment.CenterVertically) {
-            Icon(Icons.Rounded.Lightbulb, null,
-                tint     = Color(0xFFF9A825),
-                modifier = Modifier.size(18.dp))
-            Spacer(Modifier.width(6.dp))
-            Text("Try saying…",
-                style      = MaterialTheme.typography.titleSmall,
-                fontWeight = FontWeight.SemiBold,
-                color      = MaterialTheme.colorScheme.onSurfaceVariant)
-        }
-
-        suggestions.forEach { suggestion ->
-            Card(
-                onClick = { onTap(suggestion) },
-                shape   = RoundedCornerShape(12.dp),
-                colors  = CardDefaults.cardColors(
-                    containerColor = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f)
-                ),
-                border  = BorderStroke(
-                    1.dp,
-                    MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.5f)
-                )
-            ) {
-                Row(
+                    msg,
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.error,
                     modifier = Modifier
                         .fillMaxWidth()
-                        .padding(12.dp),
-                    verticalAlignment = Alignment.CenterVertically,
-                    horizontalArrangement = Arrangement.spacedBy(10.dp)
-                ) {
-                    Text("🎙️", fontSize = 16.sp)
-                    Text(
-                        "\"$suggestion\"",
-                        style    = MaterialTheme.typography.bodySmall,
-                        color    = MaterialTheme.colorScheme.onSurfaceVariant,
-                        modifier = Modifier.weight(1f)
-                    )
-                    Icon(
-                        Icons.Rounded.ChevronRight, null,
-                        tint     = MaterialTheme.colorScheme.primary,
-                        modifier = Modifier.size(16.dp)
-                    )
-                }
+                        .padding(horizontal = 4.dp),
+                    textAlign = androidx.compose.ui.text.style.TextAlign.Center
+                )
             }
+
+            Spacer(Modifier.height(60.dp))
         }
     }
 }
 
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
-private fun NotAvailableState() {
-    Box(Modifier.fillMaxSize(), Alignment.Center) {
-        Column(
-            modifier = Modifier.padding(32.dp),
-            horizontalAlignment = Alignment.CenterHorizontally,
-            verticalArrangement = Arrangement.spacedBy(16.dp)
-        ) {
-            Text("🎤", fontSize = 72.sp)
-            Text("Voice Not Available",
-                style      = MaterialTheme.typography.titleLarge,
-                fontWeight = FontWeight.Bold)
+private fun PreviewCard(
+    uiState: VoiceUiState,
+    viewModel: VoiceViewModel
+) {
+    Card(
+        shape = RoundedCornerShape(20.dp),
+        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
+        elevation = CardDefaults.cardElevation(0.dp),
+        modifier = Modifier.fillMaxWidth()
+    ) {
+        Column(modifier = Modifier.padding(18.dp)) {
+
             Text(
-                "Speech recognition is not available on this device.",
-                style     = MaterialTheme.typography.bodyMedium,
-                color     = MaterialTheme.colorScheme.onSurfaceVariant,
-                textAlign = TextAlign.Center
+                "PREVIEW",
+                style = MaterialTheme.typography.labelSmall,
+                fontWeight = FontWeight.Bold,
+                color = MaterialTheme.colorScheme.primary
             )
+            Spacer(Modifier.height(12.dp))
+
+            // Editable title
+            OutlinedTextField(
+                value = uiState.parsedTitle,
+                onValueChange = { viewModel.updateTitle(it) },
+                label = { Text("Reminder") },
+                modifier = Modifier.fillMaxWidth(),
+                shape = RoundedCornerShape(14.dp),
+                singleLine = true
+            )
+
+            Spacer(Modifier.height(14.dp))
+
+            // Date + time
+            Row(
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.spacedBy(8.dp)
+            ) {
+                Icon(
+                    Icons.Rounded.CalendarMonth,
+                    contentDescription = null,
+                    tint = MaterialTheme.colorScheme.primary,
+                    modifier = Modifier.size(18.dp)
+                )
+                Text(
+                    text = listOf(uiState.parsedDate, uiState.parsedTime)
+                        .filter { it.isNotBlank() }
+                        .joinToString("  ·  ")
+                        .ifBlank { "No time detected" },
+                    style = MaterialTheme.typography.bodyMedium,
+                    fontWeight = FontWeight.Medium
+                )
+            }
+
+            Spacer(Modifier.height(16.dp))
+
+            // Priority
+            Text(
+                "Priority",
+                style = MaterialTheme.typography.labelMedium,
+                color = MaterialTheme.colorScheme.onSurfaceVariant
+            )
+            Spacer(Modifier.height(6.dp))
+            Row(horizontalArrangement = Arrangement.spacedBy(6.dp)) {
+                val priorities = listOf(
+                    Priority.NONE, Priority.LOW, Priority.MEDIUM, Priority.HIGH, Priority.URGENT
+                )
+                priorities.forEach { p ->
+                    val selected = uiState.parsedPriority == p
+                    FilterChip(
+                        selected = selected,
+                        onClick = { viewModel.updatePriority(p) },
+                        label = {
+                            Text(
+                                text = when (p) {
+                                    Priority.NONE -> "None"
+                                    Priority.LOW -> "Low"
+                                    Priority.MEDIUM -> "Med"
+                                    Priority.HIGH -> "High"
+                                    Priority.URGENT -> "Urgent"
+                                }
+                            )
+                        },
+                        shape = RoundedCornerShape(10.dp)
+                    )
+                }
+            }
+
+            Spacer(Modifier.height(14.dp))
+
+            // Location placeholder (real triggers come in the next step)
+            Surface(
+                shape = RoundedCornerShape(12.dp),
+                color = MaterialTheme.colorScheme.surfaceVariant
+            ) {
+                Row(
+                    modifier = Modifier.padding(horizontal = 12.dp, vertical = 10.dp),
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.spacedBy(8.dp)
+                ) {
+                    Icon(
+                        Icons.Rounded.Place,
+                        contentDescription = null,
+                        tint = MaterialTheme.colorScheme.onSurfaceVariant,
+                        modifier = Modifier.size(16.dp)
+                    )
+                    Text(
+                        "Location trigger — coming soon",
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
+                }
+            }
+
+            Spacer(Modifier.height(18.dp))
+
+            // Save
+            Button(
+                onClick = { viewModel.saveReminder() },
+                enabled = uiState.parsedTitle.isNotBlank() && !uiState.isSaving,
+                modifier = Modifier.fillMaxWidth(),
+                shape = RoundedCornerShape(16.dp),
+                colors = ButtonDefaults.buttonColors(
+                    containerColor = MaterialTheme.colorScheme.primary,
+                    contentColor = Color.White
+                )
+            ) {
+                if (uiState.isSaving) {
+                    CircularProgressIndicator(
+                        modifier = Modifier.size(20.dp),
+                        strokeWidth = 2.dp,
+                        color = Color.White
+                    )
+                } else {
+                    Icon(Icons.Rounded.Check, contentDescription = null, modifier = Modifier.size(20.dp))
+                    Spacer(Modifier.width(8.dp))
+                    Text("Save reminder", fontWeight = FontWeight.Bold)
+                }
+            }
         }
     }
 }
