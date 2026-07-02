@@ -9,6 +9,9 @@ import com.lumio.app.domain.model.Priority
 import com.lumio.app.domain.model.Reminder
 import com.lumio.app.domain.model.RepeatType
 import com.lumio.app.domain.repository.ReminderRepository
+import com.lumio.app.location.GeofenceManager
+import com.lumio.app.location.GeofenceTrigger
+import com.lumio.app.location.LocationReminder
 import com.lumio.app.voice.SpeechRecognitionManager
 import com.lumio.app.voice.SpeechState
 import com.lumio.app.voice.VoiceParser
@@ -22,21 +25,25 @@ import kotlinx.coroutines.launch
 import javax.inject.Inject
 
 data class VoiceUiState(
-    val speechState: SpeechState       = SpeechState.Idle,
-    val spokenText: String             = "",
-    val parsedTitle: String            = "",
-    val parsedDate: String             = "",
-    val parsedTime: String             = "",
-    val parsedPriority: Priority       = Priority.NONE,
-    val parsedCategory: Category?      = null,
-    val dateTimeMillis: Long           = System.currentTimeMillis() + 3_600_000L,
-    val confidence: Float              = 0f,
-    val isAvailable: Boolean           = true,
-    val isSaving: Boolean              = false,
-    val isSaved: Boolean               = false,
-    val showPreview: Boolean           = false,
-    val errorMessage: String?          = null,
-    val suggestions: List<String>      = listOf(
+    val speechState: SpeechState = SpeechState.Idle,
+    val spokenText: String = "",
+    val parsedTitle: String = "",
+    val parsedDate: String = "",
+    val parsedTime: String = "",
+    val parsedPriority: Priority = Priority.NONE,
+    val parsedCategory: Category? = null,
+    val dateTimeMillis: Long = System.currentTimeMillis() + 3_600_000L,
+    val confidence: Float = 0f,
+    val isAvailable: Boolean = true,
+    val isSaving: Boolean = false,
+    val isSaved: Boolean = false,
+    val showPreview: Boolean = false,
+    val errorMessage: String? = null,
+    // ── Optional attached location (voice/location merge) ──
+    val pickedLatitude: Double? = null,
+    val pickedLongitude: Double? = null,
+    val pickedLocationName: String? = null,
+    val suggestions: List<String> = listOf(
         "Remind me to call mom tomorrow at 5 PM",
         "Remind me to take medicine today at 8 PM",
         "Remind me to pay electricity bill next Monday",
@@ -49,7 +56,8 @@ data class VoiceUiState(
 class VoiceViewModel @Inject constructor(
     @ApplicationContext private val context: Context,
     private val reminderRepository: ReminderRepository,
-    private val alarmScheduler: AlarmScheduler
+    private val alarmScheduler: AlarmScheduler,
+    private val geofenceManager: GeofenceManager
 ) : ViewModel() {
 
     private val speechManager = SpeechRecognitionManager(context)
@@ -69,12 +77,9 @@ class VoiceViewModel @Inject constructor(
                 _uiState.update { it.copy(speechState = state) }
 
                 when (state) {
-                    is SpeechState.Result -> {
-                        processVoiceResult(state.text)
-                    }
-                    is SpeechState.Error  -> {
+                    is SpeechState.Result -> processVoiceResult(state.text)
+                    is SpeechState.Error ->
                         _uiState.update { it.copy(errorMessage = state.message) }
-                    }
                     else -> {}
                 }
             }
@@ -94,15 +99,18 @@ class VoiceViewModel @Inject constructor(
         speechManager.reset()
         _uiState.update {
             it.copy(
-                spokenText    = "",
-                parsedTitle   = "",
-                parsedDate    = "",
-                parsedTime    = "",
-                parsedPriority= Priority.NONE,
-                parsedCategory= null,
-                showPreview   = false,
-                errorMessage  = null,
-                isSaved       = false
+                spokenText = "",
+                parsedTitle = "",
+                parsedDate = "",
+                parsedTime = "",
+                parsedPriority = Priority.NONE,
+                parsedCategory = null,
+                showPreview = false,
+                errorMessage = null,
+                isSaved = false,
+                pickedLatitude = null,
+                pickedLongitude = null,
+                pickedLocationName = null
             )
         }
     }
@@ -123,6 +131,27 @@ class VoiceViewModel @Inject constructor(
         _uiState.update { it.copy(parsedCategory = category) }
     }
 
+    // ── Location attachment ──
+    fun setLocation(latitude: Double, longitude: Double, name: String) {
+        _uiState.update {
+            it.copy(
+                pickedLatitude = latitude,
+                pickedLongitude = longitude,
+                pickedLocationName = name
+            )
+        }
+    }
+
+    fun updateLocationName(name: String) {
+        _uiState.update { it.copy(pickedLocationName = name) }
+    }
+
+    fun clearLocation() {
+        _uiState.update {
+            it.copy(pickedLatitude = null, pickedLongitude = null, pickedLocationName = null)
+        }
+    }
+
     fun saveReminder() {
         val state = _uiState.value
         if (state.parsedTitle.isBlank()) {
@@ -134,18 +163,44 @@ class VoiceViewModel @Inject constructor(
             _uiState.update { it.copy(isSaving = true) }
 
             val reminder = Reminder(
-                title          = state.parsedTitle,
-                description    = "Created via voice: \"${state.spokenText}\"",
+                title = state.parsedTitle,
+                description = if (state.spokenText.isBlank()) ""
+                else "Created via voice: \"${state.spokenText}\"",
                 dateTimeMillis = state.dateTimeMillis,
-                priority       = state.parsedPriority,
-                category       = state.parsedCategory,
-                repeatType     = RepeatType.NONE,
-                soundEnabled   = true,
-                vibrationEnabled = true
+                priority = state.parsedPriority,
+                category = state.parsedCategory,
+                repeatType = RepeatType.NONE,
+                soundEnabled = true,
+                vibrationEnabled = true,
+                latitude = state.pickedLatitude,
+                longitude = state.pickedLongitude,
+                locationName = state.pickedLocationName
             )
 
             val id = reminderRepository.insertReminder(reminder)
             alarmScheduler.schedule(reminder.copy(id = id))
+
+            // Register the arrival trigger if a location is attached.
+            // Failure (e.g. missing "Allow all the time" permission) does not
+            // block saving — the time-based alarm above still fires.
+            val lat = state.pickedLatitude
+            val lng = state.pickedLongitude
+            if (lat != null && lng != null) {
+                geofenceManager.addGeofence(
+                    LocationReminder(
+                        id = "reminder_$id",
+                        reminderId = id,
+                        title = state.parsedTitle,
+                        description = "",
+                        latitude = lat,
+                        longitude = lng,
+                        radiusMeters = 200f,
+                        triggerType = GeofenceTrigger.ENTER,
+                        locationName = state.pickedLocationName ?: "",
+                        isActive = true
+                    )
+                ) { _, _ -> /* best effort; time alarm is already scheduled */ }
+            }
 
             _uiState.update { it.copy(isSaving = false, isSaved = true) }
         }
@@ -155,16 +210,16 @@ class VoiceViewModel @Inject constructor(
         val parsed = VoiceParser.parse(text)
         _uiState.update { state ->
             state.copy(
-                spokenText     = text,
-                parsedTitle    = parsed.title,
-                parsedDate     = parsed.dateDescription,
-                parsedTime     = parsed.timeDescription,
+                spokenText = text,
+                parsedTitle = parsed.title,
+                parsedDate = parsed.dateDescription,
+                parsedTime = parsed.timeDescription,
                 parsedPriority = parsed.priority,
                 parsedCategory = parsed.suggestedCategory,
                 dateTimeMillis = parsed.dateTimeMillis,
-                confidence     = parsed.confidence,
-                showPreview    = true,
-                errorMessage   = null
+                confidence = parsed.confidence,
+                showPreview = true,
+                errorMessage = null
             )
         }
     }

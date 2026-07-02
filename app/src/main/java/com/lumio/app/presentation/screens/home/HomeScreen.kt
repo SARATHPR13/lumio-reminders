@@ -131,6 +131,14 @@ fun HomeScreen(
             contentPadding = PaddingValues(top = 12.dp, bottom = 120.dp)
         ) {
             item {
+                WeatherCard(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(horizontal = 20.dp, vertical = 4.dp)
+                )
+            }
+
+            item {
                 Row(
                     modifier = Modifier
                         .fillMaxWidth()
@@ -257,7 +265,22 @@ private fun TimelineRow(
                     else MaterialTheme.colorScheme.onSurface,
                     textDecoration = if (reminder.isCompleted) TextDecoration.LineThrough else null
                 )
-                if (reminder.description.isNotBlank()) {
+                if (reminder.hasLocation) {
+                    Row(
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.spacedBy(4.dp),
+                        modifier = Modifier.padding(top = 2.dp)
+                    ) {
+                        Icon(Icons.Rounded.Place, null,
+                            tint = MaterialTheme.colorScheme.primary,
+                            modifier = Modifier.size(13.dp))
+                        Text(
+                            reminder.locationName ?: "Location",
+                            style = MaterialTheme.typography.labelSmall,
+                            color = MaterialTheme.colorScheme.primary
+                        )
+                    }
+                } else if (reminder.description.isNotBlank()) {
                     Text(
                         reminder.description,
                         style = MaterialTheme.typography.labelSmall,

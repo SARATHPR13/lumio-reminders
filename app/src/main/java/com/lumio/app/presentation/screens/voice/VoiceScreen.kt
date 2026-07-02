@@ -21,6 +21,7 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.core.content.ContextCompat
+import com.google.android.gms.location.LocationServices
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.navigation.NavController
@@ -327,29 +328,8 @@ private fun PreviewCard(
 
             Spacer(Modifier.height(14.dp))
 
-            // Location placeholder (real triggers come in the next step)
-            Surface(
-                shape = RoundedCornerShape(12.dp),
-                color = MaterialTheme.colorScheme.surfaceVariant
-            ) {
-                Row(
-                    modifier = Modifier.padding(horizontal = 12.dp, vertical = 10.dp),
-                    verticalAlignment = Alignment.CenterVertically,
-                    horizontalArrangement = Arrangement.spacedBy(8.dp)
-                ) {
-                    Icon(
-                        Icons.Rounded.Place,
-                        contentDescription = null,
-                        tint = MaterialTheme.colorScheme.onSurfaceVariant,
-                        modifier = Modifier.size(16.dp)
-                    )
-                    Text(
-                        "Location trigger — coming soon",
-                        style = MaterialTheme.typography.bodySmall,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant
-                    )
-                }
-            }
+            // ── Location trigger (real) ──
+            LocationSection(uiState = uiState, viewModel = viewModel)
 
             Spacer(Modifier.height(18.dp))
 
@@ -377,5 +357,94 @@ private fun PreviewCard(
                 }
             }
         }
+    }
+}
+
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+private fun LocationSection(
+    uiState: VoiceUiState,
+    viewModel: VoiceViewModel
+) {
+    val context = LocalContext.current
+    var locError by remember { mutableStateOf<String?>(null) }
+
+    fun fetchLocation() {
+        try {
+            val fused = LocationServices.getFusedLocationProviderClient(context)
+            fused.lastLocation
+                .addOnSuccessListener { loc ->
+                    if (loc != null) {
+                        locError = null
+                        viewModel.setLocation(loc.latitude, loc.longitude, "My location")
+                    } else {
+                        locError = "Couldn't read location. Turn on GPS, open any map app once, then try again."
+                    }
+                }
+                .addOnFailureListener {
+                    locError = "Couldn't read location. Check that GPS is on."
+                }
+        } catch (e: SecurityException) {
+            locError = "Location permission was denied."
+        }
+    }
+
+    val locPerm = rememberLauncherForActivityResult(
+        ActivityResultContracts.RequestPermission()
+    ) { granted ->
+        if (granted) fetchLocation()
+        else locError = "Location permission is needed to attach a place."
+    }
+
+    if (uiState.pickedLatitude == null) {
+        OutlinedButton(
+            onClick = {
+                val granted = ContextCompat.checkSelfPermission(
+                    context, Manifest.permission.ACCESS_FINE_LOCATION
+                ) == PackageManager.PERMISSION_GRANTED
+                if (granted) fetchLocation()
+                else locPerm.launch(Manifest.permission.ACCESS_FINE_LOCATION)
+            },
+            modifier = Modifier.fillMaxWidth(),
+            shape = RoundedCornerShape(12.dp)
+        ) {
+            Icon(Icons.Rounded.Place, contentDescription = null, modifier = Modifier.size(18.dp))
+            Spacer(Modifier.width(8.dp))
+            Text("Attach my current location")
+        }
+        Text(
+            "Also reminds you when you arrive here. For that to work while the app is closed, set Location to \"Allow all the time\" in phone Settings.",
+            style = MaterialTheme.typography.labelSmall,
+            color = MaterialTheme.colorScheme.onSurfaceVariant,
+            modifier = Modifier.padding(top = 6.dp, start = 4.dp, end = 4.dp)
+        )
+    } else {
+        OutlinedTextField(
+            value = uiState.pickedLocationName ?: "",
+            onValueChange = { viewModel.updateLocationName(it) },
+            label = { Text("Place name") },
+            leadingIcon = {
+                Icon(Icons.Rounded.Place, contentDescription = null,
+                    tint = MaterialTheme.colorScheme.primary)
+            },
+            trailingIcon = {
+                IconButton(onClick = { viewModel.clearLocation() }) {
+                    Icon(Icons.Rounded.Close, contentDescription = "Remove location")
+                }
+            },
+            supportingText = { Text("Reminds you when you arrive (within ~200 m)") },
+            modifier = Modifier.fillMaxWidth(),
+            shape = RoundedCornerShape(14.dp),
+            singleLine = true
+        )
+    }
+
+    locError?.let {
+        Text(
+            it,
+            style = MaterialTheme.typography.labelSmall,
+            color = MaterialTheme.colorScheme.error,
+            modifier = Modifier.padding(top = 6.dp, start = 4.dp)
+        )
     }
 }

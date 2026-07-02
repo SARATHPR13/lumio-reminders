@@ -67,13 +67,19 @@ class LumioApp : Application(), Configuration.Provider {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
             val manager = getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
 
+            // Vibration is enabled at the CHANNEL level so it works no matter
+            // which code path posts the notification. A long pulsing pattern
+            // reads clearly as "reminder". (AlarmReceiver no longer vibrates
+            // manually, so there is no double-buzz.)
+
             val reminderChannel = NotificationChannel(
                 CHANNEL_REMINDERS, getString(R.string.channel_reminders_name), NotificationManager.IMPORTANCE_HIGH
             ).apply {
                 description = getString(R.string.channel_reminders_desc)
-                enableVibration(false)
+                enableVibration(true)
+                vibrationPattern = longArrayOf(0, 600, 250, 600, 250, 600)
                 enableLights(true)
-                lightColor = Color.parseColor("#FF1A73E8")
+                lightColor = Color.parseColor("#FF3B7A57")
                 setShowBadge(true)
             }
 
@@ -81,7 +87,8 @@ class LumioApp : Application(), Configuration.Provider {
                 CHANNEL_ALARMS, getString(R.string.channel_alarms_name), NotificationManager.IMPORTANCE_MAX
             ).apply {
                 description = getString(R.string.channel_alarms_desc)
-                enableVibration(false)
+                enableVibration(true)
+                vibrationPattern = longArrayOf(0, 800, 300, 800, 300, 800, 300, 800)
                 enableLights(true)
                 setBypassDnd(true)
                 setShowBadge(true)
@@ -101,9 +108,11 @@ class LumioApp : Application(), Configuration.Provider {
     }
 
     companion object {
-        const val CHANNEL_REMINDERS = "lumio_reminders_channel"
-        const val CHANNEL_ALARMS = "lumio_alarms_channel"
-        const val CHANNEL_SILENT = "lumio_silent_channel"
+        // v2 IDs force Android to create fresh channels with the corrected
+        // (vibration-on) settings, even on an update install.
+        const val CHANNEL_REMINDERS = "lumio_reminders_v2"
+        const val CHANNEL_ALARMS = "lumio_alarms_v2"
+        const val CHANNEL_SILENT = "lumio_silent_v2"
         const val ACTION_SNOOZE_5 = "com.lumio.app.ACTION_SNOOZE_5"
         const val ACTION_SNOOZE_15 = "com.lumio.app.ACTION_SNOOZE_15"
         const val ACTION_SNOOZE_30 = "com.lumio.app.ACTION_SNOOZE_30"

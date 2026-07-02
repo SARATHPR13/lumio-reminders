@@ -6,10 +6,6 @@ import android.content.BroadcastReceiver
 import android.content.Context
 import android.content.Intent
 import android.graphics.Color
-import android.os.Build
-import android.os.VibrationEffect
-import android.os.Vibrator
-import android.os.VibratorManager
 import androidx.core.app.NotificationCompat
 import com.lumio.app.LumioApp
 import com.lumio.app.MainActivity
@@ -33,12 +29,9 @@ class AlarmReceiver : BroadcastReceiver() {
         val priorityStr = intent.getStringExtra("priority") ?: Priority.NONE.name
         val soundOn = intent.getBooleanExtra("sound", true)
         val vibrationOn = intent.getBooleanExtra("vibration", true)
-        val priority = runCatching {
-            Priority.valueOf(priorityStr)
-        }.getOrDefault(Priority.NONE)
+        val priority = runCatching { Priority.valueOf(priorityStr) }.getOrDefault(Priority.NONE)
 
-        if (vibrationOn) vibrate(context, priority)
-        showNotification(context, reminderId, title, description, priority, soundOn)
+        showNotification(context, reminderId, title, description, priority, soundOn, vibrationOn)
     }
 
     private fun showNotification(
@@ -47,7 +40,8 @@ class AlarmReceiver : BroadcastReceiver() {
         title: String,
         description: String,
         priority: Priority,
-        soundOn: Boolean
+        soundOn: Boolean,
+        vibrationOn: Boolean
     ) {
         val manager = context.getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
 
@@ -71,17 +65,20 @@ class AlarmReceiver : BroadcastReceiver() {
             PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
         )
 
-        val channelId = when (priority) {
-            Priority.URGENT, Priority.HIGH -> LumioApp.CHANNEL_ALARMS
-            else -> if (soundOn) LumioApp.CHANNEL_REMINDERS else LumioApp.CHANNEL_SILENT
+        // Choose channel. If both sound AND vibration are off, use the silent
+        // channel; otherwise use a channel that vibrates (and sounds).
+        val channelId = when {
+            !soundOn && !vibrationOn -> LumioApp.CHANNEL_SILENT
+            priority == Priority.URGENT || priority == Priority.HIGH -> LumioApp.CHANNEL_ALARMS
+            else -> LumioApp.CHANNEL_REMINDERS
         }
 
         val priorityColor = when (priority) {
-            Priority.URGENT -> Color.parseColor("#FFD32F2F")
-            Priority.HIGH -> Color.parseColor("#FFFF6B35")
-            Priority.MEDIUM -> Color.parseColor("#FFF9A825")
-            Priority.LOW -> Color.parseColor("#FF4CAF50")
-            Priority.NONE -> Color.parseColor("#FF1A73E8")
+            Priority.URGENT -> Color.parseColor("#FFD1453B")
+            Priority.HIGH -> Color.parseColor("#FFE8833A")
+            Priority.MEDIUM -> Color.parseColor("#FFF0A73F")
+            Priority.LOW -> Color.parseColor("#FF6BA368")
+            Priority.NONE -> Color.parseColor("#FF3B7A57")
         }
 
         val notifPriority = when (priority) {
@@ -94,7 +91,7 @@ class AlarmReceiver : BroadcastReceiver() {
             "${priority.emoji} ${context.getString(R.string.notif_tap_to_view)}"
         }
 
-        val notification = NotificationCompat.Builder(context, channelId)
+        val builder = NotificationCompat.Builder(context, channelId)
             .setSmallIcon(android.R.drawable.ic_dialog_info)
             .setContentTitle("${priority.emoji} $title")
             .setContentText(bodyText)
@@ -124,33 +121,14 @@ class AlarmReceiver : BroadcastReceiver() {
                     PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
                 )
             )
-            .build()
 
-        manager.notify(reminderId.toInt(), notification)
-    }
+        // Pre-Android-8 devices have no channels, so set vibration on the
+        // notification directly. On Android 8+ this is ignored and the
+        // channel's vibration pattern is used instead.
+        if (vibrationOn) {
+            builder.setVibrate(longArrayOf(0, 600, 250, 600, 250, 600))
+        }
 
-    private fun vibrate(context: Context, priority: Priority) {
-        try {
-            val pattern = when (priority) {
-                Priority.URGENT, Priority.HIGH ->
-                    longArrayOf(0, 900, 250, 900, 250, 900, 250, 900, 250, 900)
-                else ->
-                    longArrayOf(0, 900, 250, 900, 250, 900)
-            }
-
-            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
-                val mgr = context.getSystemService(Context.VIBRATOR_MANAGER_SERVICE) as VibratorManager
-                mgr.defaultVibrator.vibrate(VibrationEffect.createWaveform(pattern, -1))
-            } else {
-                @Suppress("DEPRECATION")
-                val vibrator = context.getSystemService(Context.VIBRATOR_SERVICE) as Vibrator
-                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-                    vibrator.vibrate(VibrationEffect.createWaveform(pattern, -1))
-                } else {
-                    @Suppress("DEPRECATION")
-                    vibrator.vibrate(pattern, -1)
-                }
-            }
-        } catch (_: Exception) {}
+        manager.notify(reminderId.toInt(), builder.build())
     }
 }
